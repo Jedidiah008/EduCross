@@ -1,0 +1,243 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* EduCross Game-Based Learning Colors */
+    --background: 222 47% 11%;
+    --foreground: 48 100% 96%;
+
+    --card: 222 47% 15%;
+    --card-foreground: 48 100% 96%;
+
+    --popover: 222 47% 13%;
+    --popover-foreground: 48 100% 96%;
+
+    --primary: 45 100% 51%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 222 30% 20%;
+    --muted-foreground: 220 15% 65%;
+
+    --accent: 25 95% 53%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 48 100% 96%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 48 100% 96%;
+
+    --border: 222 30% 25%;
+    --input: 222 30% 25%;
+    --ring: 45 100% 51%;
+
+    --radius: 1rem;
+
+    /* Custom game colors */
+    --game-blue: 222 47% 11%;
+    --game-blue-light: 199 89% 48%;
+    --game-yellow: 45 100% 51%;
+    --game-orange: 25 95% 53%;
+    --game-red: 0 84% 60%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 51%) 0%, hsl(25 95% 53%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(199 89% 48%) 0%, hsl(222 47% 30%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 47% 15%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 18%) 0%, hsl(222 47% 12%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(45 100% 51% / 0.15) 0%, transparent 70%);
+
+    /* Shadows */
+    --shadow-glow-yellow: 0 0 40px hsl(45 100% 51% / 0.3);
+    --shadow-glow-blue: 0 0 40px hsl(199 89% 48% / 0.3);
+    --shadow-card: 0 10px 40px -10px hsl(222 47% 5% / 0.5);
+    --shadow-button: 0 4px 20px hsl(45 100% 51% / 0.4);
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 48 100% 96%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 30% 20%;
+    --sidebar-accent-foreground: 48 100% 96%;
+    --sidebar-border: 222 30% 25%;
+    --sidebar-ring: 45 100% 51%;
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 48 100% 96%;
+    --card: 222 47% 15%;
+    --card-foreground: 48 100% 96%;
+    --popover: 222 47% 13%;
+    --popover-foreground: 48 100% 96%;
+    --primary: 45 100% 51%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 222 30% 20%;
+    --muted-foreground: 220 15% 65%;
+    --accent: 25 95% 53%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 48 100% 96%;
+    --border: 222 30% 25%;
+    --input: 222 30% 25%;
+    --ring: 45 100% 51%;
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 48 100% 96%;
+    --sidebar-primary: 45 100% 51%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 30% 20%;
+    --sidebar-accent-foreground: 48 100% 96%;
+    --sidebar-border: 222 30% 25%;
+    --sidebar-ring: 45 100% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    background: var(--gradient-hero);
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold;
+  }
+}
+
+@layer components {
+  .game-card {
+    @apply relative overflow-hidden rounded-2xl p-6 transition-all duration-300;
+    background: var(--gradient-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  .game-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-glow-yellow);
+  }
+
+  .game-button {
+    @apply relative overflow-hidden rounded-xl px-8 py-4 font-display font-bold text-lg transition-all duration-300;
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--shadow-button);
+  }
+
+  .game-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px hsl(45 100% 51% / 0.5);
+  }
+
+  .game-button:active {
+    transform: translateY(0);
+  }
+
+  .glow-effect {
+    @apply relative;
+  }
+
+  .glow-effect::before {
+    content: '';
+    @apply absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300;
+    background: var(--gradient-glow);
+  }
+
+  .glow-effect:hover::before {
+    opacity: 1;
+  }
+
+  .subject-card {
+    @apply relative overflow-hidden rounded-3xl p-8 cursor-pointer transition-all duration-500;
+    background: var(--gradient-card);
+    border: 2px solid hsl(var(--border));
+  }
+
+  .subject-card:hover {
+    border-color: hsl(var(--primary));
+    transform: translateY(-12px) scale(1.03);
+    box-shadow: var(--shadow-glow-yellow);
+  }
+
+  .subject-card.chemistry {
+    --card-accent: hsl(var(--secondary));
+  }
+
+  .subject-card.physics {
+    --card-accent: hsl(var(--accent));
+  }
+
+  .floating-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(45 100% 51% / 0.1) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px hsl(45 100% 51% / 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px hsl(45 100% 51% / 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}

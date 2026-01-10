@@ -1,0 +1,3699 @@
+import { useMemo } from 'react';
+import { getUnit } from '@/data/subjects';
+import MatchItGame from '@/pages/games/MatchItGame';
+import { text } from 'stream/consumers';
+
+export interface GameQuestion {
+  question: string;
+  answer: string;
+  options?: string[];
+  hints?: string[];
+}
+
+export interface EnumerationQuestion {
+  question: string;
+  answers: string[];
+}
+
+export interface CategoryQuestion {
+  categories: string[];
+  items: { text: string; category: string }[];
+}
+
+export interface SnakeQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface WordSearchQuestion {
+  word: string;
+}
+
+export interface MatchItQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface FillBlanksQuestion {
+  sentence: string;
+  answer: string;
+}
+
+export interface MemoryFlipQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface FightTimeQuestion {
+  question: string;
+  answers: string[];
+}
+
+export interface GuessWordQuestion {
+  question: string;
+  answer: string;
+}
+
+export interface ConceptPuzzleQuestion {
+  question: string;
+  answer: string;
+  hints: string[];
+}
+
+export interface JigsawQuestion {
+  id: string;
+  text: string;
+  order: number;
+}
+
+export interface DragDropData {
+  categories: string[];
+  items: { text: string; category: string }[];
+}
+
+export interface GameData {
+  snake?: SnakeQuestion[];
+  wordsearch?: WordSearchQuestion[];
+  dragdrop?: DragDropData;
+  fillblanks?: FillBlanksQuestion[];
+  memoryflip?: MemoryFlipQuestion[];
+  fighttime?: FightTimeQuestion[];
+  matchit?: MatchItQuestion[];
+  guessword?: GuessWordQuestion[];
+  conceptpuzzle?: ConceptPuzzleQuestion[];
+  jigsaw?: JigsawQuestion[][];
+}
+
+// Centralized game questions data
+// Add your game questions here in this format:
+const gameQuestionData: Record<string, Record<string, GameData>> = {
+  'chemistry-1': {
+    'chem1-unit1': {
+      // TODO: Add snake questions
+      snake: [
+        { question: "A state of matter with a definite volume but no definite shape.", answer: "Liquid" },
+        { question: "The smallest unit of a chemical element that retains its chemical properties.", answer: "Atom" },
+        { question: "A substance made of two or more elements chemically bonded.", answer: "Compound" },
+        { question: "The process of changing from a solid to a liquid.", answer: "Melting" },
+        { question: "A pure substance made of only one type of atom.", answer: "Element" },
+        // { question: "...", answer: "..." },
+      ],
+      // TODO: Add wordsearch questions (just words, no questions)
+      wordsearch: [
+        { word: "ATOM" },
+        { word: "MOLECULE" },
+        { word: "SOLID" },
+        { word: "LIQUID" },
+        { word: "GAS" },
+        // { word: "CHEMISTRY" },
+      ],
+      // TODO: Add dragdrop questions
+      dragdrop: {
+        categories: ["Matter Type", "Property Type", "Change Type"],
+        items: [
+          { text: "Solid", category: "Matter Type" },
+          { text: "Liquid", category: "Matter Type" },
+          { text: "Gas", category: "Matter Type" },
+          { text: "Melting", category: "Change Type" },
+          { text: "Freezing", category: "Change Type" },
+          { text: "Boiling", category: "Change Type" },
+          { text: "Density", category: "Property Type" },
+          { text: "Viscosity", category: "Property Type" },
+          { text: "Conductivity", category: "Property Type" },
+          { text: "Evaporation", category: "Change Type" },
+          // { text: "Solid", category: "Matter Type" },
+        ],
+      },
+      // TODO: Add fillblanks questions
+      fillblanks: [
+        { sentence: "The ___ is the basic unit of a chemical element.", answer: "atom" },
+        { sentence: "___ is the process of a solid changing into a liquid.", answer: "melting" },
+        { sentence: "A ___ is made of two or more atoms bonded together.", answer: "molecule" },
+        { sentence: "Matter that has a definite shape and volume is called ___.", answer: "solid" },
+        { sentence: "The state of matter with no definite shape or volume is ___.", answer: "gas" },
+        // { sentence: "Chemistry is the study of ___.", answer: "matter" },
+      ],
+      // TODO: Add memoryflip questions
+      memoryflip: [
+        { question: "The process of a liquid changing into a gas?", answer: "Evaporation" },
+        { question: "Type of matter has a definite shape and volume?", answer: "Solid" },
+        { question: "The smallest unit of a chemical element?", answer: "Atom" },
+        { question: "A substance made of two or more elements chemically bonded?", answer: "Compound" },
+        { question: "The process of changing from a solid to a liquid?", answer: "Melting" },
+        // { question: "What is the study of chemistry?", answer: "Matter and reactions" },
+      ],
+      // TODO: Add fighttime questions
+      fighttime: [
+        { question: "Name the three common states of matter.", answers: ["Solid", "Liquid", "Gas"] },
+        { question: "List the changes of state in matter.", answers: ["Melting", "Freezing", "Boiling", "Evaporation"] },
+        { question: "Name two types of Physical properties of matter(two properties of matter relates to maximum temperature).", answers: ["Melting point", "Boiling point",] },
+        { question: "What are the basic units of chemical elements?", answers: ["Atoms"] },
+        { question: "Name the types of chemical substances.", answers: ["Elements", "Compounds", "Mixtures"] },
+        // { question: "Name types of matter", answers: ["Solid", "Liquid", "Gas"] },
+      ],
+      // TODO: Add matchit questions
+      matchit: [
+        { question: "Atom", answer: "The smallest unit of a chemical element" },
+        { question: "Molecule", answer: "Two or more atoms bonded together" },
+        { question: "Solid", answer: "Has a definite shape and volume" },
+        { question: "Liquid", answer: "Has a definite volume but no definite shape" },
+        { question: "Gas", answer: "Has no definite shape or volume" },
+        // { question: "Has a fixed shape and volume", answer: "Solid" },
+      ],
+      // TODO: Add guessword questions
+      guessword: [
+        { question: "The process of a solid changing directly into a gas.", answer: "Sublimation" },
+        { question: "The measure of how much mass is contained in a given volume.", answer: "Density" },
+        { question: "A mixture where the components are not uniformly distributed.", answer: "Heterogeneous" },
+        { question: "The amount of space that matter occupies.", answer: "Volume" },
+        { question: "The process by which a liquid changes into a solid.", answer: "Freezing" },
+        // { question: "The building block of matter", answer: "ATOM" },
+      ],
+      // TODO: Add conceptpuzzle questions
+      conceptpuzzle: [
+        { question: "A substance made of two or more elements chemically bonded.", answer: "Compound", hints: ["Made of multiple elements", "Chemically bonded"] },
+        { question: "The process of changing from a solid to a liquid.", answer: "Melting", hints: ["Heat involved", "Solid to liquid"] },
+        { question: "A pure substance made of only one type of atom.", answer: "Element", hints: ["One type of atom", "Cannot be broken down"] },
+        { question: "The smallest unit of a chemical element that retains its chemical properties.", answer: "Atom", hints: ["Basic unit", "Chemical element"] },
+        { question: "A state of matter with a definite volume but no definite shape.", answer: "Liquid", hints: ["Flows freely", "Takes shape of container"] },
+        // { question: "Why is chemistry called the central science?", answer: "It connects physics and other sciences", hints: ["Bridges subjects", "Links different fields"] },
+      ],
+      // TODO: Add jigsaw questions (multiple puzzles)
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "A substance ", order: 1 },
+          { id: "2", text: "made of two or more ", order: 2 },
+          { id: "3", text: "elements chemically ", order: 3 },
+          { id: "4", text: "bonded is called a ", order: 4 },
+          { id: "5", text: "compound.", order: 5 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "The process ", order: 1 },
+          { id: "2", text: "of changing from ", order: 2 },
+          { id: "3", text: "a solid to a ", order: 3 },
+          { id: "4", text: "liquid is called ", order: 4 },
+          { id: "5", text: "melting.", order: 5 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "An atom ", order: 1 },
+          { id: "2", text: "is the basic unit ", order: 2 },
+          { id: "3", text: "of a chemical ", order: 3 },
+          { id: "4", text: "element.", order: 4 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Matter that ", order: 1 },
+          { id: "2", text: "has a definite ", order: 2 },
+          { id: "3", text: "shape and volume ", order: 3 },
+          { id: "4", text: "is called solid.", order: 4 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "The state ", order: 1 },
+          { id: "2", text: "of matter with ", order: 2 },
+          { id: "3", text: "no definite shape ", order: 3 },
+          { id: "4", text: "or volume is gas.", order: 4 },
+        ],
+      ],
+    },
+    'chem1-unit2': {
+      // Add your unit2 questions here
+      snake: [
+        { question: "mass per unit volume (g/mL or g/cm³)", answer: "Density" },
+        { question: "temperature at which solid becomes liquid", answer: "Melting point" },
+        { question: "temperature at which liquid becomes gas", answer: "Boiling point" },
+        { question: " amount that dissolves in a given solvent", answer: "Solubility" },
+        { question: "separates solid particles from a liquid or gas using a porous barrier.", answer: "Filtration" },
+      ],
+      wordsearch: [
+        { word: "ATOM" },
+        { word: "MOLECULE" },
+        { word: "SOLID" },
+        { word: "LIQUID" },
+        { word: "GAS" },
+      ],
+      dragdrop: {
+        categories: ["Separation Method", "Property Type", "Evaluating Consumer Products"],
+        items: [
+          { text: "Filtration", category: "Separation Method" },
+          { text: "Distillation", category: "Separation Method" },
+          { text: "Evaporation", category: "Separation Method" },
+          { text: "Density", category: "Property Type" },
+          { text: "Solubility", category: "Property Type" },
+          { text: "Melting Point", category: "Property Type" },
+          { text: "Boiling Point", category: "Property Type" },
+          { text: "Components", category: "Evaluating Consumer Products" },
+          { text: "Use", category: "Evaluating Consumer Products" },
+          { text: "Cost", category: "Evaluating Consumer Products" }
+        ]
+      },
+      fillblanks: [
+        { sentence: "___ is the measure of mass per unit volume.", answer: "Density" },
+        { sentence: "The temperature at which a solid becomes a liquid is called ___.", answer: "Melting point" },
+        { sentence: "The temperature at which a liquid becomes a gas is called ___.", answer: "Boiling point" },
+        { sentence: "___ is the amount of solute that dissolves in a given solvent.", answer: "Solubility" },
+        { sentence: "___ is a method that separates solid particles from a liquid using a porous barrier.", answer: "Filtration" },
+      ],
+      memoryflip: [
+        { question: "Density", answer: "Mass per unit volume" },
+        { question: "Melting point", answer: "Temperature at which solid becomes liquid" },
+        { question: "Boiling point", answer: "Temperature at which liquid becomes gas" },
+        { question: "Solubility", answer: "Amount that dissolves in a given solvent" },
+        { question: "Filtration", answer: "Separates solid particles from a liquid or gas using a porous barrier" },
+      ],
+      fighttime: [
+        { question: "Name Physical properties used to identify substances.", answers: ["Density", "Melting point", "Boiling point", "Solubility"] },
+        { question: "List methods of separating mixtures.", answers: ["Filtration", "Distillation", "Evaporation", "Chromatography"] },
+        { question: "What factors should be considered when evaluating consumer products?", answers: ["Components", "Use", "Cost", "Safety", "Quality"] },
+        { question: "Mass per unit volume", answers: ["Density"] },
+        { question: "Amount that dissolves in a given solvent", answers: ["Solubility"] },
+      ],
+      matchit: [
+        { question: "Density", answer: "Mass per unit volume" },
+        { question: "Melting point", answer: "Temperature at which solid becomes liquid" },
+        { question: "Boiling point", answer: "Temperature at which liquid becomes gas" },
+        { question: "Solubility", answer: "Amount that dissolves in a given solvent" },
+        { question: "Filtration", answer: "Separates solid particles from a liquid or gas using a porous barrier" },
+      ],
+      guessword: [
+        { question: "Mass per unit volume", answer: "Density" },
+        { question: "Temperature at which solid becomes liquid", answer: "Melting point" },
+        { question: "Temperature at which liquid becomes gas", answer: "Boiling point" },
+        { question: "Amount that dissolves in a given solvent", answer: "Solubility" },
+        { question: "Separates solid particles from a liquid or gas using a porous barrier", answer: "Filtration" },
+      ],
+      conceptpuzzle: [
+        { question: "Mass per unit volume", answer: "Density", hints: ["Physical property", "g/mL or g/cm³"] },
+        { question: "Temperature at which solid becomes liquid", answer: "Melting point", hints: ["Physical property", "Heat involved"] },
+        { question: "Temperature at which liquid becomes gas", answer: "Boiling point", hints: ["Physical property", "Heat involved"] },
+        { question: "Amount that dissolves in a given solvent", answer: "Solubility", hints: ["Physical property", "Dissolving"] },
+        { question: "Separates solid particles from a liquid or gas using a porous barrier", answer: "Filtration", hints: ["Separation method", "Porous barrier"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Density ", order: 1 },
+          { id: "2", text: "is mass ", order: 2 },
+          { id: "3", text: "per unit ", order: 3 },
+          { id: "4", text: "volume.", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "Melting point ", order: 1 },
+          { id: "2", text: "is the temperature ", order: 2 },
+          { id: "3", text: "at which a solid ", order: 3 },
+          { id: "4", text: "becomes a liquid.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Boiling point ", order: 1 },
+          { id: "2", text: "is the temperature ", order: 2 },
+          { id: "3", text: "at which a liquid ", order: 3 },
+          { id: "4", text: "becomes a gas.", order: 4 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Chromatography ", order: 1 },
+          { id: "2", text: " separates components ", order: 2 },
+          { id: "3", text: "based on their different rates ", order: 3 },
+          { id: "4", text: "of movement through a stationary phase.", order: 4 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Filtration ", order: 1 },
+          { id: "2", text: "separates solid ", order: 2 },
+          { id: "3", text: "particles from a ", order: 3 },
+          { id: "4", text: "liquid using a porous barrier.", order: 4 },
+        ],
+      ],
+    },
+    'chem1-unit3': {
+      // Add your unit3 questions here
+      snake: [
+        { question: "A positively charged ion.", answer: "Cation" },
+        { question: "A negatively charged ion.", answer: "Anion" },
+        { question: "A chemical bond formed by the sharing of electron pairs between atoms.", answer: "Covalent bond" },
+        { question: "A chemical bond formed by the electrostatic attraction between oppositely charged ions.", answer: "Ionic bond" },
+        { question: "A substance that increases the rate of a chemical reaction without being consumed.", answer: "Catalyst" },
+      ],
+      wordsearch: [
+        {word: "CATION"},
+        {word: "ANION"},
+        {word: "COVALENT"},
+        {word: "IONIC"},
+        {word: "CATALYST"},
+      ],
+      dragdrop: {
+        categories: ["Ion Type", "Bond Type", "Reaction Role", "SI Units and Prefixes"],
+        items: [
+          { text: "Cation", category: "Ion Type" },
+          { text: "Anion", category: "Ion Type" },
+          { text: "Covalent bond", category: "Bond Type" },
+          { text: "Ionic bond", category: "Bond Type" },
+          { text: "Catalyst", category: "Reaction Role" },
+          { text: "Reactant", category: "Reaction Role" },
+          { text: "Product", category: "Reaction Role" },
+          { text: "Inhibitor", category: "Reaction Role" },
+          { text: "Meter (m)", category: "SI Units and Prefixes" },
+          { text: "Gram (g)", category: "SI Units and Prefixes" },
+          
+        ],
+      },
+      fillblanks: [
+        { sentence: "A ___ is a positively charged ion.", answer: "Cation" },
+        { sentence: "A ___ is a negatively charged ion.", answer: "Anion" },
+        { sentence: "A ___ bond is formed by the sharing of electron pairs between atoms.", answer: "Covalent" },
+        { sentence: "An ___ bond is formed by the electrostatic attraction between oppositely charged ions.", answer: "Ionic" },
+        { sentence: "A ___ increases the rate of a chemical reaction without being consumed.", answer: "Catalyst" },
+      ],
+      memoryflip: [
+        { question: "Cation", answer: "A positively charged ion" },
+        { question: "Anion", answer: "A negatively charged ion" },
+        { question: "Covalent bond", answer: "A chemical bond formed by the sharing of electron pairs between atoms" },
+        { question: "Ionic bond", answer: "A chemical bond formed by the electrostatic attraction between oppositely charged ions" },
+        { question: "Catalyst", answer: "A substance that increases the rate of a chemical reaction without being consumed" },
+      ],
+      fighttime: [
+        { question: "Name types of ions.", answers: ["Cation", "Anion"] },
+        { question: "List types of chemical bonds.", answers: ["Covalent bond", "Ionic bond", "Metallic Bond"] },
+        { question: "A positively charged ion", answers: ["Cation"] },
+        { question: "A negatively charged ion", answers: ["Anion"] },
+        { question: "A type of chemical bond formed by sharing electron pairs", answers: ["Covalent bond"] },
+      ],
+      matchit: [
+        { question: "Cation", answer: "A positively charged ion" },
+        { question: "Anion", answer: "A negatively charged ion" },
+        { question: "Covalent bond", answer: "A chemical bond formed by the sharing of electron pairs between atoms" },
+        { question: "Ionic bond", answer: "A chemical bond formed by the electrostatic attraction between oppositely charged ions" },
+        { question: "Catalyst", answer: "A substance that increases the rate of a chemical reaction without being consumed" },
+      ],
+      guessword: [
+        { question: "A positively charged ion.", answer: "Cation" },
+        { question: "A negatively charged ion.", answer: "Anion" },
+        { question: "A chemical bond formed by the sharing of electron pairs between atoms.", answer: "Covalent bond" },
+        { question: "A chemical bond formed by the electrostatic attraction between oppositely charged ions.", answer: "Ionic bond" },
+        { question: "delocalized electrons among metal atoms", answer: "Metallic Bond" },
+      ],
+      conceptpuzzle: [
+        { question: "A positively charged ion.", answer: "Cation", hints: ["Positive charge", "Ion"] },
+        { question: "A negatively charged ion.", answer: "Anion", hints: ["Negative charge", "Ion"] },
+        { question: "A chemical bond formed by the sharing of electron pairs between atoms.", answer: "Covalent bond", hints: ["Sharing electrons", "Between atoms"] },
+        { question: "A chemical bond formed by the electrostatic attraction between oppositely charged ions.", answer: "Ionic bond", hints: ["Opposite charges", "Electrostatic attraction"] },
+        { question: "delocalized electrons among metal atoms", answer: "Metallic Bond", hints: ["Delocalized electrons", "Metal atoms"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "A positively ", order: 1 },
+          { id: "2", text: "charged ion ", order: 2 },
+          { id: "3", text: "is called a ", order: 3 },
+          { id: "4", text: "Cation.", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "A negatively ", order: 1 },
+          { id: "2", text: "charged ion ", order: 2 },
+          { id: "3", text: "is called an ", order: 3 },
+          { id: "4", text: "Anion.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "A chemical ", order: 1 },
+          { id: "2", text: "bond formed by ", order: 2 },
+          { id: "3", text: "the sharing of electron ", order: 3 },
+          { id: "4", text: "pairs between atoms ", order: 4 },
+          { id: "5", text: "is a Covalent bond.", order: 5 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "A chemical ", order: 1 },
+          { id: "2", text: "bond formed by ", order: 2 },
+          { id: "3", text: "the electrostatic ", order: 3 },
+          { id: "4", text: "attraction between ", order: 4 },
+          { id: "5", text: "oppositely charged ions ", order: 5 },
+          { id: "6", text: "is an Ionic bond.", order: 6 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "A delocalized ", order: 1 },
+          { id: "2", text: "electrons among ", order: 2 },
+          { id: "3", text: "metal atoms ", order: 3 },
+          { id: "4", text: "is called Metallic Bond.", order: 4 },
+        ],
+      ],
+    },
+    'chem1-unit4': {
+      snake: [
+        { question: "shows actual number of atoms", answer: "Molecular formula" },
+        { question: "shows arrangement of atoms", answer: "Structural formula" },
+        { question: "three-dimensional arrangement of atoms", answer: "Spatial formula" },
+        { question: "simplest whole-number ratio of atoms", answer: "Empirical formula" },
+        { question: "number of atoms of each element in a molecule", answer: "Molecular structure" },
+      ],
+      wordsearch: [
+        {word: "MOLECULAR"},
+        {word: "STRUCTURAL"},
+        {word: "MOLE"},
+        {word: "EMPIRICAL"},
+        {word: "FORMULA"},
+      ],
+      dragdrop: {
+        categories: ["Formula Type", "Mole Concept", "Chemical Calculations"],
+        items: [
+          { text: "Molecular formula", category: "Formula Type" },
+          { text: "Structural formula", category: "Formula Type" },
+          { text: "Spatial formula", category: "Formula Type" },
+          { text: "Empirical formula", category: "Formula Type" },
+          { text: "Mole", category: "Mole Concept" },
+          { text: "Avogadro's number", category: "Mole Concept" },
+          { text: "Molar mass", category: "Mole Concept" },
+          { text: "Percent composition", category: "Chemical Calculations" },
+          { text: "Empirical formula calculation", category: "Chemical Calculations" },
+          { text: "Molecular formula calculation", category: "Chemical Calculations" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "The ___ shows the actual number of atoms of each element in a molecule.", answer: "Molecular formula" },
+        { sentence: "The ___ shows the arrangement of atoms in a molecule.", answer: "Structural formula" },
+        { sentence: "The ___ represents the three-dimensional arrangement of atoms in a molecule.", answer: "Spatial formula" },
+        { sentence: "The ___ gives the simplest whole-number ratio of atoms in a compound.", answer: "Empirical formula" },
+        { sentence: "The ___ indicate the number of each type of atom.", answer: "Subscripts" },
+      ],
+      memoryflip: [
+        { question: "How many moles are in 44 g of CO₂?", answer: "1 mol" },
+        { question: "How many grams are in 0.5 mol of H₂O?", answer: "9 g" },
+        { question: "A compound contains 40% C, 6.7% H, and 53.3% O. What is its empirical formula?", answer: "CH₂O" },
+        { question: "What is the percent composition of oxygen in H₂O?", answer: "88.9%" },
+        { question: "What is the molar mass of NaCl?", answer: "58.44 g/mol" },
+      ],
+      fighttime: [
+        { question: 'how many moles are in 44 g of CO₂?', answers: ['1 mol'] },
+        { question: 'how many grams are in 0.5 mol of H₂O?', answers: ['9 g'] },
+        { question: 'a compound contains 40% C, 6.7% H, and 53.3% O. what is its empirical formula?', answers: ['CH₂O'] },
+        { question: 'what is the percent composition of oxygen in H₂O?', answers: ['88.9%'] },
+        { question: 'what is the molar mass of NaCl?', answers: ['58.44 g/mol'] },
+      ],
+      matchit: [
+        { question: 'how many moles are in 44 g of CO₂?', answer: '1 mol' },
+        { question: 'how many grams are in 0.5 mol of H₂O?', answer: '9 g' },
+        { question: 'a compound contains 40% C, 6.7% H, and 53.3% O. what is its empirical formula?', answer: 'CH₂O' },
+        { question: 'what is the percent composition of oxygen in H₂O?', answer: '88.9%' },
+        { question: 'what is the molar mass of NaCl?', answer: '58.44 g/mol' },
+      ],
+      guessword: [
+        { question: "Shows actual number of atoms", answer: "Molecular formula" },
+        { question: "Shows arrangement of atoms", answer: "Structural formula" },
+        { question: "Three-dimensional arrangement of atoms", answer: "Spatial formula" },
+        { question: "Simplest whole-number ratio of atoms", answer: "Empirical formula" },
+        { question: "Number of atoms of each element in a molecule", answer: "Subscripts" },
+      ],
+      conceptpuzzle: [
+        { question: "Shows actual number of atoms", answer: "Molecular formula", hints: ["Actual count", "Atoms"] },
+        { question: "Shows arrangement of atoms", answer: "Structural formula", hints: ["Arrangement", "Atoms"] },
+        { question: "Three-dimensional arrangement of atoms", answer: "Spatial formula", hints: ["3D structure", "Atoms"] },
+        { question: "Simplest whole-number ratio of atoms", answer: "Empirical formula", hints: ["Simplest ratio", "Atoms"] },
+        { question: "Number of atoms of each element in a molecule", answer: "Subscripts", hints: ["Atom count", "Molecule"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Molecular ", order: 1 },
+          { id: "2", text: "formula ", order: 2 },
+          { id: "3", text: "shows actual ", order: 3 },
+          { id: "4", text: "number of atoms.", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "Structural ", order: 1 },
+          { id: "2", text: "formula ", order: 2 },
+          { id: "3", text: "shows arrangement ", order: 3 },
+          { id: "4", text: "of atoms.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Spatial ", order: 1 },
+          { id: "2", text: "  formula ", order: 2 },
+          { id: "3", text: "represents the ", order: 3 },
+          { id: "4", text: "three-dimensional ", order: 4 },
+          { id: "5", text: "arrangement of atoms.", order: 5 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Empirical ", order: 1 },
+          { id: "2", text: "formula ", order: 2 },
+          { id: "3", text: "gives the simplest ", order: 3 },
+          { id: "4", text: "whole-number ratio ", order: 4 },
+          { id: "5", text: "of atoms in a compound.", order: 5 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Subscripts ", order: 1 },
+          { id: "2", text: "indicate the ", order: 2 },
+          { id: "3", text: "number of each type ", order: 3 },
+          { id: "4", text: "of atom.", order: 4 },
+        ],
+      ],
+    },
+    'chem1-unit5': {
+      snake: [
+        { question: "Starting materials in a chemical reaction", answer: "Reactants" },
+        { question: "Substances formed by a chemical reaction", answer: "Products" },
+        { question: "The maximum amount of product possible (from stoichiometry)", answer: "Theoretical Yield" },
+        { question: "Number in front of a formula showing the relative amount", answer: "Coefficient" },
+        { question: "Uses mole ratios from balanced equations to calculate amounts.", answer: "Stoichiometry" },
+      ],
+      wordsearch: [
+        {word: "REACTANTS"},
+        {word: "PRODUCTS"},
+        {word: "STOICHIOMETRY"},
+        {word: "THEORETICAL"},
+        {word: "YIELD"},
+      ],
+      dragdrop: {
+        categories: ["Types of Reactants", "Types of Chemical Reaction", "Yields"],
+        items: [
+          { category: "Types of Reactants", text: "Limiting Reactant" },
+          { category: "Types of Chemical Reaction", text: "Combustion" },
+          { category: "Yields", text: "Theoretical Yield" },
+          { category: "Types of Chemical Reaction", text: "Synthesis" },
+          { category: "Yields", text: "Percent Yield" },
+          { category: "Types of Chemical Reaction", text: "Decomposition" },
+          { category: "Yields", text: "Actual Yield" },
+          { category: "Types of Chemical Reaction", text: "Single Replacement" },
+          { category: "Types of Chemical Reaction", text: "Double Replacement" },
+          { category: "Types of Reactants", text: "Excess Reactant" },
+        ]
+      },
+      fillblanks: [
+        { sentence: "___ are the starting materials in a chemical reaction.", answer: "Reactants" },
+        { sentence: "___ are the substances formed by a chemical reaction.", answer: "Products" },
+        { sentence: "___ is the maximum amount of product possible (from stoichiometry)", answer: "Theoretical Yield" },
+        { sentence: "A ___ is a number in front of a formula showing the relative amount.", answer: "Coefficient" },
+        { sentence: "___ uses mole ratios from balanced equations to calculate amounts.", answer: "Stoichiometry" },
+      ],
+      memoryflip: [
+        { question: "The theoretical yield of a reaction is 50 g. The actual yield is 40 g. Find the percent yield.", answer: "80%" },
+        { question: "A reaction has a theoretical yield of 120 g but only 90 g is produced. Find the percent yield.", answer: "75%" },
+        { question: "The theoretical yield is 500 g. If the percent yield is 60%, find the actual yield.", answer: "300 g" },
+        { question: "A reaction has a theoretical yield of 250 g. If the percent yield is 90%, what is the actual yield?", answer: "225 g" },
+        { question: "Na + Cl₂ → NaCl", answer: "2Na + Cl₂ → 2NaCl" },
+      ],
+      fighttime: [
+        { question: "The theoretical yield of a reaction is 50 g. The actual yield is 40 g. Find the percent yield.", answers: ["80%"] },
+        { question: "A reaction has a theoretical yield of 120 g but only 90 g is produced. Find the percent yield.", answers: ["75%"] },
+        { question: "The theoretical yield is 500 g. If the percent yield is 60%, find the actual yield.", answers: ["300 g"] },
+        { question: "A reaction has a theoretical yield of 250 g. If the percent yield is 90%, what is the actual yield?", answers: ["225 g"] },
+        { question: "Balance the equation: Na + Cl₂ → NaCl", answers: ["2Na + Cl₂ → 2NaCl"] },
+      ],
+      matchit: [
+        { question: "Theoretical yield of 50 g and actual yield of 40 g", answer: "80%" },
+        { question: "Theoretical yield of 120 g and actual yield of 90 g", answer: "75%" },
+        { question: "Theoretical yield of 500 g and percent yield of 60%", answer: "300 g" },
+        { question: "Theoretical yield of 250 g and percent yield of 90%", answer: "225 g" },
+        { question: "Balanced equation for Na + Cl₂ → NaCl", answer: "2Na + Cl₂ → 2NaCl" },
+      ],
+      guessword: [
+        { question: "Starting materials in a chemical reaction", answer: "Reactants" },
+        { question: "Substances formed by a chemical reaction", answer: "Products" },
+        { question: "The maximum amount of product possible (from stoichiometry)", answer: "Theoretical Yield" },
+        { question: "Number in front of a formula showing the relative amount", answer: "Coefficient" },
+        { question: "Uses mole ratios from balanced equations to calculate amounts.", answer: "Stoichiometry" },
+      ],
+      conceptpuzzle: [
+        { question: "Starting materials in a chemical reaction", answer: "Reactants", hints: ["Beginning substances", "Chemical reaction"] },
+        { question: "Substances formed by a chemical reaction", answer: "Products", hints: ["Resulting substances", "Chemical reaction"] },
+        { question: "The maximum amount of product possible", answer: "Theoretical Yield", hints: ["Maximum product", "Stoichiometry"] },
+        { question: "Number in front of a formula showing the relative amount", answer: "Coefficient", hints: ["Number in front", "Relative amount"] },
+        { question: "Uses mole ratios from balanced equations to calculate amounts.", answer: "Stoichiometry", hints: ["Mole ratios", "Balanced equations"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Reactants ", order: 1 },
+          { id: "2", text: "are the ", order: 2 },
+          { id: "3", text: "starting materials ", order: 3 },
+          { id: "4", text: "in a chemical ", order: 4 },
+          { id: "5", text: "reaction.", order: 5 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "Products ", order: 1 },
+          { id: "2", text: "are the ", order: 2 },
+          { id: "3", text: "substances formed ", order: 3 },
+          { id: "4", text: "by a chemical ", order: 4 },
+          { id: "5", text: "reaction.", order: 5 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Theoretical ", order: 1 },
+          { id: "2", text: "Yield ", order: 2 },
+          { id: "3", text: "is the maximum ", order: 3 },
+          { id: "4", text: "amount of product ", order: 4 },
+          { id: "5", text: "possible (from ", order: 5 },
+          { id: "6", text: "stoichiometry).", order: 6 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "A Coefficient ", order: 1 },
+          { id: "2", text: "is a number ", order: 2 },
+          { id: "3", text: "in front of a ", order: 3 },
+          { id: "4", text: "formula showing ", order: 4 },
+          { id: "5", text: "the relative ", order: 5 },
+          { id: "6", text: "amount.", order: 6 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Stoichiometry ", order: 1 },
+          { id: "2", text: "uses mole ", order: 2 },
+          { id: "3", text: "ratios from ", order: 3 },
+          { id: "4", text: "balanced equations ", order: 4 },
+          { id: "5", text: "to calculate ", order: 5 },
+          { id: "6", text: "amounts.", order: 6 },
+        ],
+      ],
+    },
+    'chem1-unit6': {
+      snake: [
+        { question: "At constant temperature, pressure and volume are inversely proportional.", answer: "Boyle's Law" },
+        { question: "At constant pressure, volume and temperature are directly proportional.", answer: "Charles's Law" },
+        { question: "At constant volume, pressure and temperature are directly proportional.", answer: "Gay-Lussac's Law" },
+        { question: "The total pressure of a mixture of gases is equal to the sum of the partial pressures of the individual gases.", answer: "Dalton's Law" },
+        { question: "The volume of a gas is directly proportional to the number of moles of gas at constant temperature and pressure.", answer: "Avogadro's Law" },
+      ],
+      wordsearch: [
+        {word: "PRESSURE"},
+        {word: "VOLUME"},
+        {word: "TEMPERATURE"},
+        {word: "MOLES"},
+        {word: "GAS LAWS"},
+      ],
+      dragdrop: {
+        categories: ["Gas Laws", "Gas Properties", "Units of Measurement"],
+        items: [
+          { category: "Gas Laws", text: "Boyle's Law" },
+          { category: "Gas Laws", text: "Charles's Law" },
+          { category: "Gas Laws", text: "Gay-Lussac's Law" },
+          { category: "Gas Laws", text: "Dalton's Law" },
+          { category: "Gas Laws", text: "Avogadro's Law" },
+          { category: "Gas Properties", text: "Pressure" },
+          { category: "Gas Properties", text: "Volume" },
+          { category: "Gas Properties", text: "Temperature" },
+          { category: "Gas Properties", text: "Moles" },
+          { category: "Units of Measurement", text: "Atmospheres (atm)" },
+          { category: "Units of Measurement", text: "Liters (L)" },
+          { category: "Units of Measurement", text: "Kelvin (K)" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ states that at constant temperature, pressure and volume are inversely proportional.", answer: "Boyle's Law" },
+        { sentence: "___ states that at constant pressure, volume and temperature are directly proportional.", answer: "Charles's Law" },
+        { sentence: "___ states that at constant volume, pressure and temperature are directly proportional.", answer: "Gay-Lussac's Law" },
+        { sentence: "___ states that the total pressure of a mixture of gases is equal to the sum of the partial pressures of the individual gases.", answer: "Dalton's Law" },
+        { sentence: "___ states that the volume of a gas is directly proportional to the number of moles of gas at constant temperature and pressure.", answer: "Avogadro's Law" },
+      ],
+      memoryflip: [
+        { question: "A gas occupies 6 L at 1 atm. Find the pressure if the volume becomes 3 L.", answer: "2 atm" },
+        { question: "A gas occupies 5 L at 250 K. What is the temperature if the volume becomes 10 L?", answer: "500 K" },
+        { question: "A gas has a pressure of 2 atm at 300 K. Find the pressure at 600 K.", answer: "4 atm" },
+        { question: "A gas has P₁ = 2 atm, V₁ = 4 L, T₁ = 400 K. Find P₂ if V₂ = 8 L and T₂ = 800 K.", answer: "4 atm" },
+        { question: "How many moles of gas are in a 10 L container at 1 atm and 300 K? (R = 0.082)", answer: "0.41 mol" },
+      ],
+      fighttime: [
+        { question: "A gas occupies 6 L at 1 atm. Find the pressure if the volume becomes 3 L.", answers: ["2 atm"] },
+        { question: "A gas occupies 5 L at 250 K. What is the temperature if the volume becomes 10 L?", answers: ["500 K"] },
+        { question: "A gas has a pressure of 2 atm at 300 K. Find the pressure at 600 K.", answers: ["4 atm"] },
+        { question: "A gas has P₁ = 2 atm, V₁ = 4 L, T₁ = 400 K. Find P₂ if V₂ = 8 L and T₂ = 800 K.", answers: ["4 atm"] },
+        { question: "How many moles of gas are in a 10 L container at 1 atm and 300 K? (R = 0.082)", answers: ["0.41 mol"] },
+      ],
+      matchit: [
+        { question: "A gas occupies 6 L at 1 atm. Find the pressure if the volume becomes 3 L.", answer: "2 atm" },
+        { question: "A gas occupies 5 L at 250 K. What is the temperature if the volume becomes 10 L?", answer: "500 K" },
+        { question: "A gas has a pressure of 2 atm at 300 K. Find the pressure at 600 K.", answer: "4 atm" },
+        { question: "A gas has P₁ = 2 atm, V₁ = 4 L, T₁ = 400 K. Find P₂ if V₂ = 8 L and T₂ = 800 K.", answer: "4 atm" },
+        { question: "How many moles of gas are in a 10 L container at 1 atm and 300 K? (R = 0.082)", answer: "0.41 mol" },
+      ],
+      guessword: [
+        { question: "At constant temperature, pressure and volume are inversely proportional.", answer: "Boyle's Law" },
+        { question: "At constant pressure, volume and temperature are directly proportional.", answer: "Charles's Law" },
+        { question: "At constant volume, pressure and temperature are directly proportional.", answer: "Gay-Lussac's Law" },
+        { question: "The total pressure of a mixture of gases is equal to the sum of the partial pressures of the individual gases.", answer: "Dalton's Law" },
+        { question: "The volume of a gas is directly proportional to the number of moles of gas at constant temperature and pressure.", answer: "Avogadro's Law" },
+      ],
+      conceptpuzzle: [
+        { question: "At constant temperature, pressure and volume are inversely proportional.", answer: "Boyle's Law", hints: ["Constant temperature", "Inverse relationship"] },
+        { question: "At constant pressure, volume and temperature are directly proportional.", answer: "Charles's Law", hints: ["Constant pressure", "Direct relationship"] },
+        { question: "At constant volume, pressure and temperature are directly proportional.", answer: "Gay-Lussac's Law", hints: ["Constant volume", "Direct relationship"] },
+        { question: "The total pressure of a mixture of gases is equal to the sum of the partial pressures of the individual gases.", answer: "Dalton's Law", hints: ["Partial pressures", "Sum"] },
+        { question: "The volume of a gas is directly proportional to the number of moles of gas at constant temperature and pressure.", answer: "Avogadro's Law", hints: ["Moles", "Volume"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+      [
+        { id: "1", text: "Boyle's Law ", order: 1 },
+        { id: "2", text: "states that at ", order: 2 },
+        { id: "3", text: "constant temperature, ", order: 3 },
+        { id: "4", text: "pressure and volume ", order: 4 },
+        { id: "5", text: "are inversely proportional.", order: 5 },
+      ],
+        // Puzzle 2
+      [
+        { id: "1", text: "Charles's Law ", order: 1 },
+        { id: "2", text: "states that at ", order: 2 },
+        { id: "3", text: "constant pressure, ", order: 3 },
+        { id: "4", text: "volume and temperature ", order: 4 },
+        { id: "5", text: "are directly proportional.", order: 5 },
+      ],
+        // Puzzle 3
+      [
+        { id: "1", text: "Gay-Lussac's Law ", order: 1 },
+        { id: "2", text: "states that at ", order: 2 },
+        { id: "3", text: "constant volume, ", order: 3 },
+        { id: "4", text: "pressure and temperature ", order: 4 },
+        { id: "5", text: "are directly proportional.", order: 5 },
+      ],
+        // Puzzle 4
+      [
+        { id: "1", text: "Dalton's Law ", order: 1 },
+        { id: "2", text: "states that the ", order: 2 },
+        { id: "3", text: "total pressure of a ", order: 3 },
+        { id: "4", text: "mixture of gases is ", order: 4 },
+        { id: "5", text: "equal to the sum of ", order: 5 },
+        { id: "6", text: "the partial pressures ", order: 6 },
+        { id: "7", text: "of the individual gases.", order: 7 },
+      ],
+        // Puzzle 5
+      [
+        { id: "1", text: "Avogadro's Law ", order: 1 },
+        { id: "2", text: "states that the ", order: 2 },
+        { id: "3", text: "volume of a gas is ", order: 3 },
+        { id: "4", text: "directly proportional to ", order: 4 },
+        { id: "5", text: "the number of moles of gas ", order: 5 },
+        { id: "6", text: "at constant temperature ", order: 6 },
+        { id: "7", text: "and pressure.", order: 7 },
+      ],
+      ]
+    },
+    'chem1-unit7': {
+      // Add your unit7 questions here
+      snake: [
+        { question: "Atoms of the same element with different numbers of neutrons", answer: "Isotopes" },
+        { question: "Developed the first scientific atomic theory", answer: "John Dalton" },
+        { question: "Discovered the electron", answer: "J.J. Thomson" },
+        { question: "Proposed the nuclear model of the atom", answer: "Ernest Rutherford" },
+        { question: "Weighted average mass of all naturally occurring isotopes", answer: "Atomic Mass" },
+      ],
+      wordsearch: [
+        {word: "ISOTOPES"},
+        {word: "DALTON"},
+        {word: "THOMSON"},
+        {word: "RUTHERFORD"},
+        {word: "ATOMIC MASS"},
+      ],
+      dragdrop: {
+        categories: ["Atomic Theories", "Atomic Particles", "Atomic Properties"],
+        items: [
+          { category: "Atomic Theories", text: "Dalton's Atomic Theory" },
+          { category: "Atomic Theories", text: "Thomson's Plum Pudding Model" },
+          { category: "Atomic Theories", text: "Rutherford's Nuclear Model" },
+          { category: "Atomic Particles", text: "Proton" },
+          { category: "Atomic Particles", text: "Neutron" },
+          { category: "Atomic Particles", text: "Electron" },
+          { category: "Atomic Properties", text: "Atomic Number" },
+          { category: "Atomic Properties", text: "Mass Number" },
+          { category: "Atomic Properties", text: "Isotopes" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ are atoms of the same element with different numbers of neutrons.", answer: "Isotopes" },
+        { sentence: "___ developed the first scientific atomic theory.", answer: "John Dalton" },
+        { sentence: "___ discovered the electron.", answer: "J.J. Thomson" },
+        { sentence: "___ proposed the nuclear model of the atom.", answer: "Ernest Rutherford" },
+        { sentence: "___ is the weighted average mass of all naturally occurring isotopes.", answer: "Atomic Mass" },
+      ],
+      memoryflip: [
+        { question: "Isotopes", answer: "Atoms of the same element with different numbers of neutrons" },
+        { question: "John Dalton", answer: "Developed the first scientific atomic theory" },
+        { question: "J.J. Thomson", answer: "Discovered the electron" },
+        { question: "Ernest Rutherford", answer: "Proposed the nuclear model of the atom" },
+        { question: "Atomic Mass", answer: "Weighted average mass of all naturally occurring isotopes" },
+      ],
+      fighttime: [
+        { question: "Weighted average mass of all naturally occurring isotopes.", answers: ["Atomic Mass"] },
+        { question: "Atoms of the same element with different numbers of neutrons.", answers: ["Isotopes"] },
+        { question: "Who developed the first scientific atomic theory?", answers: ["John Dalton"] },
+        { question: "Who discovered the electron?", answers: ["J.J. Thomson"] },
+        { question: "Who proposed the nuclear model of the atom?", answers: ["Ernest Rutherford"] },
+      ],
+      matchit: [
+        { question: "Isotopes", answer: "Atoms of the same element with different numbers of neutrons" },
+        { question: "John Dalton", answer: "Developed the first scientific atomic theory" },
+        { question: "J.J. Thomson", answer: "Discovered the electron" },
+        { question: "Ernest Rutherford", answer: "Proposed the nuclear model of the atom" },
+        { question: "Atomic Mass", answer: "Weighted average mass of all naturally occurring isotopes" },
+      ],
+      guessword: [
+        { question: "Atoms of the same element with different numbers of neutrons", answer: "Isotopes" },
+        { question: "Developed the first scientific atomic theory", answer: "John Dalton" },
+        { question: "Discovered the electron", answer: "J.J. Thomson" },
+        { question: "Proposed the nuclear model of the atom", answer: "Ernest Rutherford" },
+        { question: "Weighted average mass of all naturally occurring isotopes", answer: "Atomic Mass" },
+      ],
+      conceptpuzzle: [
+        { question: "Atoms of the same element with different numbers of neutrons", answer: "Isotopes", hints: ["Same element", "Different neutrons"] },
+        { question: "Developed the first scientific atomic theory", answer: "John Dalton", hints: ["First atomic theory", "Scientist"] },
+        { question: "Discovered the electron", answer: "J.J. Thomson", hints: ["Electron discovery", "Scientist"] },
+        { question: "Proposed the nuclear model of the atom", answer: "Ernest Rutherford", hints: ["Nuclear model", "Scientist"] },
+        { question: "Weighted average mass of all naturally occurring isotopes", answer: "Atomic Mass", hints: ["Average mass", "Isotopes"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Isotopes ", order: 1 },
+          { id: "2", text: "are atoms of ", order: 2 },
+          { id: "3", text: "the same element ", order: 3 },
+          { id: "4", text: "with different ", order: 4 },
+          { id: "5", text: "numbers of neutrons.", order: 5 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "John Dalton ", order: 1 },
+          { id: "2", text: "developed the ", order: 2 },
+          { id: "3", text: "first scientific ", order: 3 },
+          { id: "4", text: "atomic theory.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "J.J. Thomson ", order: 1 },
+          { id: "2", text: "discovered the ", order: 2 },
+          { id: "3", text: "electron.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Ernest Rutherford ", order: 1 },
+          { id: "2", text: "proposed the ", order: 2 },
+          { id: "3", text: "nuclear model ", order: 3 },
+          { id: "4", text: "of the atom.", order: 4 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Atomic Mass ", order: 1 },
+          { id: "2", text: "is the weighted ", order: 2 },
+          { id: "3", text: "average mass of ", order: 3 },
+          { id: "4", text: "all naturally ", order: 4 },
+          { id: "5", text: "occurring isotopes.", order: 5 },
+        ],
+      ],
+    },
+    'chem1-unit8': {
+      // Add your unit8 questions here
+      snake: [
+        { question: "A horizontal row in the periodic table", answer: "Period" },
+        { question: "A vertical column in the periodic table", answer: "Group" },
+        { question: "Elements that have properties of both metals and nonmetals", answer: "Metalloids" },
+        { question: "Elements that are good conductors of heat and electricity", answer: "Metals" },
+        { question: "Elements that are poor conductors of heat and electricity", answer: "Nonmetals" },
+      ],
+      wordsearch: [
+        {word: "PERIOD"},
+        {word: "GROUP"},
+        {word: "METALLOIDS"},
+        {word: "METALS"},
+        {word: "NONMETALS"},
+      ],
+      dragdrop: {
+        categories: ["Element Categories", "Periodic Table Features", "Element Properties"],
+        items: [
+          { category: "Element Categories", text: "Metals" },
+          { category: "Element Categories", text: "Nonmetals" },
+          { category: "Element Categories", text: "Metalloids" },
+          { category: "Periodic Table Features", text: "Period" },
+          { category: "Periodic Table Features", text: "Group" },
+          { category: "Element Properties", text: "Conductivity" },
+          { category: "Element Properties", text: "Malleability" },
+          { category: "Element Properties", text: "Ductility" },
+          { category: "Element Properties", text: "Luster" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "A ___ is a horizontal row in the periodic table.", answer: "Period" },
+        { sentence: "A ___ is a vertical column in the periodic table.", answer: "Group" },
+        { sentence: "___ are elements that have properties of both metals and nonmetals.", answer: "Metalloids" },
+        { sentence: "___ are elements that are good conductors of heat and electricity.", answer: "Metals" },
+        { sentence: "___ are elements that are poor conductors of heat and electricity.", answer: "Nonmetals" },
+      ],
+      memoryflip: [
+        { question: "Period", answer: "A horizontal row in the periodic table" },
+        { question: "Group", answer: "A vertical column in the periodic table" },
+        { question: "Metalloids", answer: "Elements that have properties of both metals and nonmetals" },
+        { question: "Metals", answer: "Elements that are good conductors of heat and electricity" },
+        { question: "Nonmetals", answer: "Elements that are poor conductors of heat and electricity" },
+      ],
+      fighttime: [
+        { question: "What is a horizontal row in the periodic table?", answers: ["Period"] },
+        { question: "What is a vertical column in the periodic table?", answers: ["Group"] },
+        { question: "What are elements that have properties of both metals and nonmetals?", answers: ["Metalloids"] },
+        { question: "What are elements that are good conductors of heat and electricity?", answers: ["Metals"] },
+        { question: "What are elements that are poor conductors of heat and electricity?", answers: ["Nonmetals"] },
+      ],
+      matchit: [
+        { question: "Period", answer: "A horizontal row in the periodic table" },
+        { question: "Group", answer: "A vertical column in the periodic table" },
+        { question: "Metalloids", answer: "Elements that have properties of both metals and nonmetals" },
+        { question: "Metals", answer: "Elements that are good conductors of heat and electricity" },
+        { question: "Nonmetals", answer: "Elements that are poor conductors of heat and electricity" },
+      ],
+      guessword: [
+        { question: "A horizontal row in the periodic table", answer: "Period" },
+        { question: "A vertical column in the periodic table", answer: "Group" },
+        { question: "Elements that have properties of both metals and nonmetals", answer: "Metalloids" },
+        { question: "Elements that are good conductors of heat and electricity", answer: "Metals" },
+        { question: "Elements that are poor conductors of heat and electricity", answer: "Nonmetals" },
+      ],
+      conceptpuzzle: [
+        { question: "A horizontal row in the periodic table", answer: "Period", hints: ["Horizontal", "Row"] },
+        { question: "A vertical column in the periodic table", answer: "Group", hints: ["Vertical", "Column"] },
+        { question: "Elements that have properties of both metals and nonmetals", answer: "Metalloids", hints: ["Both properties", "Elements"] },
+        { question: "Elements that are good conductors of heat and electricity", answer: "Metals", hints: ["Good conductors", "Elements"] },
+        { question: "Elements that are poor conductors of heat and electricity", answer: "Nonmetals", hints: ["Poor conductors", "Elements"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "A Period ", order: 1 },
+          { id: "2", text: "is a horizontal ", order: 2 },
+          { id: "3", text: "row in the ", order: 3 },
+          { id: "4", text: "periodic table.", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "A Group ", order: 1 },
+          { id: "2", text: "is a vertical ", order: 2 },
+          { id: "3", text: "column in the ", order: 3 },
+          { id: "4", text: "periodic table.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Metalloids ", order: 1 },
+          { id: "2", text: "are elements that ", order: 2 },
+          { id: "3", text: "have properties of ", order: 3 },
+          { id: "4", text: "both metals and ", order: 4 },
+          { id: "5", text: "nonmetals.", order: 5 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Metals ", order: 1 },
+          { id: "2", text: "are elements that ", order: 2 },
+          { id: "3", text: "are good conductors ", order: 3 },
+          { id: "4", text: "of heat and ", order: 4 },
+          { id: "5", text: "electricity.", order: 5 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Nonmetals ", order: 1 },
+          { id: "2", text: "are elements that ", order: 2 },
+          { id: "3", text: "are poor conductors ", order: 3 },
+          { id: "4", text: "of heat and ", order: 4 },
+          { id: "5", text: "electricity.", order: 5 },
+        ],
+      ],
+    },
+    'chem1-unit9': {
+      // Add your unit9 questions here
+      snake: [
+        { question: "Attraction between molecules (not within)", answer: "Intermolecular Forces" },
+        { question: "Strongest intermolecular force", answer: "Hydrogen Bonding" },
+        { question: "A molecule with partial positive and negative ends", answer: "Dipole" },
+        { question: "A covalent bond with unequal electron sharing", answer: "Polar Bond" },
+        { question: "Type of bond that occur in pure metals and alloys.", answer: "Metallic Bonding" },
+      ],
+      wordsearch: [
+        {word: "COVALENT"},
+        {word: "DIPOLE"},
+        {word: "POLAR BOND"},
+        {word: "IONIC"},
+        {word: "INTERMOLECULAR"},
+      ],
+      dragdrop: {
+        categories: ["Bond Types", "Molecular Properties", "Intermolecular Forces"],
+        items: [
+          { category: "Bond Types", text: "Covalent Bond" },
+          { category: "Bond Types", text: "Ionic Bond" },
+          { category: "Bond Types", text: "Metallic Bonding" },
+          { category: "Molecular Properties", text: "Dipole" },
+          { category: "Molecular Properties", text: "Nonpolar Molecule" },
+          { category: "Intermolecular Forces", text: "Hydrogen Bonding" },
+          { category: "Intermolecular Forces", text: "Dipole-Dipole" },
+          { category: "Intermolecular Forces", text: "London Dispersion" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the attraction between molecules (not within).", answer: "Intermolecular Forces" },
+        { sentence: "___ is the strongest intermolecular force.", answer: "Hydrogen Bonding" },
+        { sentence: "A ___ is a molecule with partial positive and negative ends.", answer: "Dipole" },
+        { sentence: "A ___ is a bonds form between nonmetals.", answer: "Covalent Bond" },
+        { sentence: "___ is the type of bond that occur in pure metals and alloys.", answer: "Metallic Bonding" },
+      ],
+      memoryflip: [
+        { question: "Intermolecular Forces", answer: "Attraction between molecules (not within)" },
+        { question: "Hydrogen Bonding", answer: "Strongest intermolecular force" },
+        { question: "Dipole", answer: "A molecule with partial positive and negative ends" },
+        { question: "Covalent Bond", answer: "A bonds form between nonmetals" },
+        { question: "Metallic Bonding", answer: "Type of bond that occur in pure metals and alloys." },
+      ],
+      fighttime: [
+        { question: "What is the attraction between molecules (not within)?", answers: ["Intermolecular Forces"] },
+        { question: "What is the strongest intermolecular force?", answers: ["Hydrogen Bonding"] },
+        { question: "What is a molecule with partial positive and negative ends?", answers: ["Dipole"] },
+        { question: "What type of bond forms between nonmetals?", answers: ["Covalent Bond"] },
+        { question: "What type of bond occurs in pure metals and alloys?", answers: ["Metallic Bonding"] },
+      ],
+      matchit: [
+        { question: "Intermolecular Forces", answer: "Attraction between molecules (not within)" },
+        { question: "Hydrogen Bonding", answer: "Strongest intermolecular force" },
+        { question: "Dipole", answer: "A molecule with partial positive and negative ends" },
+        { question: "Covalent Bond", answer: "A bonds form between nonmetals" },
+        { question: "Metallic Bonding", answer: "Type of bond that occur in pure metals and alloys." },
+      ],
+      guessword: [
+        { question: "Attraction between molecules (not within)", answer: "Intermolecular Forces" },
+        { question: "Strongest intermolecular force", answer: "Hydrogen Bonding" },
+        { question: "A molecule with partial positive and negative ends", answer: "Dipole" },
+        { question: "A covalent bond with unequal electron sharing", answer: "Polar Bond" },
+        { question: "Type of bond that occur in pure metals and alloys.", answer: "Metallic Bonding" },
+      ],
+      conceptpuzzle: [
+        { question: "Attraction between molecules (not within)", answer: "Intermolecular Forces", hints: ["Between molecules", "Not within"] },
+        { question: "Strongest intermolecular force", answer: "Hydrogen Bonding", hints: ["Strongest", "Intermolecular"] },
+        { question: "A molecule with partial positive and negative ends", answer: "Dipole", hints: ["Partial charges", "Molecule"] },
+        { question: "A covalent bond with unequal electron sharing", answer: "Polar Bond", hints: ["Unequal sharing", "Covalent"] },
+        { question: "Type of bond that occur in pure metals and alloys.", answer: "Metallic Bonding", hints: ["Metals", "Alloys"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Intermolecular Forces ", order: 1 },
+          { id: "2", text: "is the attraction ", order: 2 },
+          { id: "3", text: "between molecules ", order: 3 },
+          { id: "4", text: "(not within).", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "Hydrogen Bonding ", order: 1 },
+          { id: "2", text: "is the strongest ", order: 2 },
+          { id: "3", text: "intermolecular force.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "A Dipole ", order: 1 },
+          { id: "2", text: "is a molecule ", order: 2 },
+          { id: "3", text: "with partial ", order: 3 },
+          { id: "4", text: "positive and negative ", order: 4 },
+          { id: "5", text: "ends.", order: 5 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "A Polar Bond ", order: 1 }, 
+          { id: "2", text: "is a covalent bond ", order: 2 },
+          { id: "3", text: "with unequal electron sharing.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Metallic Bonding ", order: 1 },
+          { id: "2", text: "is the type of bond ", order: 2 },
+          { id: "3", text: "that occur in pure ", order: 3 },
+          { id: "4", text: "metals and alloys.", order: 4 },
+        ],
+      ],
+    },
+    'chem1-unit10': {
+      // Add your unit10 questions here
+      snake: [
+        { question: "2 electron domains", answer: "LINEAR" },
+        { question: "4 electron domains", answer: "TETRAHEDRAL" },
+        { question: "6 electron domains", answer: "OCTAHEDRAL" },
+        { question: "Absorbs Energy", answer: "ENDOTHERMIC" },
+        { question: "Releases Energy", answer: "EXOTHERMIC" },
+      ],
+      wordsearch: [
+        {word: "LINEAR"},
+        {word: "TETRAHEDRAL"},
+        {word: "OCTAHEDRAL"},
+        {word: "ENDOTHERMIC"},
+        {word: "EXOTHERMIC"},
+      ],
+      dragdrop: {
+        categories: ["Molecular Shapes", "Energy Changes", "Electron Domains"],
+        items: [
+          { category: "Molecular Shapes", text: "Linear" },
+          { category: "Molecular Shapes", text: "Tetrahedral" },
+          { category: "Molecular Shapes", text: "Octahedral" },
+          { category: "Energy Changes", text: "Endothermic" },
+          { category: "Energy Changes", text: "Exothermic" },
+          { category: "Electron Domains", text: "2 Domains" },
+          { category: "Electron Domains", text: "4 Domains" },
+          { category: "Electron Domains", text: "6 Domains" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is a molecular shape with 2 electron domains.", answer: "LINEAR" },
+        { sentence: "___ is a molecular shape with 4 electron domains.", answer: "TETRAHEDRAL" },
+        { sentence: "___ is a molecular shape with 6 electron domains.", answer: "OCTAHEDRAL" },
+        { sentence: "___ is a process that absorbs energy.", answer: "ENDOTHERMIC" },
+        { sentence: "___ is a process that releases energy.", answer: "EXOTHERMIC" },
+      ],
+      memoryflip: [
+        { question: "LINEAR", answer: "2 electron domains" },
+        { question: "TETRAHEDRAL", answer: "4 electron domains" },
+        { question: "OCTAHEDRAL", answer: "6 electron domains" },
+        { question: "ENDOTHERMIC", answer: "Absorbs Energy" },
+        { question: "EXOTHERMIC", answer: "Releases Energy" },
+      ],
+      fighttime: [
+        { question: "What is a molecular shape with 2 electron domains?", answers: ["LINEAR"] },
+        { question: "What is a molecular shape with 4 electron domains?", answers: ["TETRAHEDRAL"] },
+        { question: "What is a molecular shape with 6 electron domains?", answers: ["OCTAHEDRAL"] },
+        { question: "What is a process that absorbs energy?", answers: ["ENDOTHERMIC"] },
+        { question: "What is a process that releases energy?", answers: ["EXOTHERMIC"] },
+      ],
+      matchit: [
+        { question: "LINEAR", answer: "2 electron domains" },
+        { question: "TETRAHEDRAL", answer: "4 electron domains" },
+        { question: "OCTAHEDRAL", answer: "6 electron domains" },
+        { question: "ENDOTHERMIC", answer: "Absorbs Energy" },
+        { question: "EXOTHERMIC", answer: "Releases Energy" },
+      ],
+      guessword: [
+        { question: "2 electron domains", answer: "LINEAR" },
+        { question: "4 electron domains", answer: "TETRAHEDRAL" },
+        { question: "6 electron domains", answer: "OCTAHEDRAL" },
+        { question: "Absorbs Energy", answer: "ENDOTHERMIC" },
+        { question: "Releases Energy", answer: "EXOTHERMIC" },
+      ],
+      conceptpuzzle: [
+        { question: "2 electron domains", answer: "LINEAR", hints: ["2 domains", "Shape"] },
+        { question: "4 electron domains", answer: "TETRAHEDRAL", hints: ["4 domains", "Shape"] },
+        { question: "6 electron domains", answer: "OCTAHEDRAL", hints: ["6 domains", "Shape"] },
+        { question: "Absorbs Energy", answer: "ENDOTHERMIC", hints: ["Energy", "Absorbs"] },
+        { question: "Releases Energy", answer: "EXOTHERMIC", hints: ["Energy", "Releases"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "LINEAR ", order: 1 },
+          { id: "2", text: "is a molecular ", order: 2 },
+          { id: "3", text: "shape with ", order: 3 },
+          { id: "4", text: "2 electron domains.", order: 4 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "TETRAHEDRAL ", order: 1 },
+          { id: "2", text: "is a molecular ", order: 2 },
+          { id: "3", text: "shape with ", order: 3 },
+          { id: "4", text: "4 electron domains.", order: 4 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "OCTAHEDRAL ", order: 1 },
+          { id: "2", text: "is a molecular ", order: 2 },
+          { id: "3", text: "shape with ", order: 3 },
+          { id: "4", text: "6 electron domains.", order: 4 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "ENDOTHERMIC ", order: 1 },
+          { id: "2", text: "is a process ", order: 2 },
+          { id: "3", text: "that absorbs ", order: 3 },
+          { id: "4", text: "energy.", order: 4 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "EXOTHERMIC ", order: 1 },
+          { id: "2", text: "is a process ", order: 2 },
+          { id: "3", text: "that releases ", order: 3 },
+          { id: "4", text: "energy.", order: 4 },
+        ],
+      ],
+    },
+  },
+  'chemistry-2': {
+    'chem2-unit1': {
+      // Add your questions here
+      snake: [
+        { question: " Resistance to flow", answer: "Viscosity" },
+        { question: " proportional to average kinetic energy of particles", answer: "Temperature" },
+        { question: " Energy needed to increase surface area", answer: "Surface Tension" },
+        { question: " Beyond this, liquid and gas are indistinguishable", answer: "Critical Point" },
+        { question: " All three phases coexist", answer: "Triple Point" },
+      ],
+      wordsearch: [
+        {word: "VISCOSITY"},
+        {word: "TEMPERATURE"},
+        {word: "CRYSTALLINE"},
+        {word: "AMORPHOUS"},
+        {word: "TRIPLE POINT  "},
+      ],
+      dragdrop: {
+        categories: ["Properties of Liquids", "Phase Changes", "Surface Phenomena"],
+        items: [
+          { category: "Properties of Liquids", text: "Viscosity" },
+          { category: "Properties of Liquids", text: "Surface Tension" },
+          { category: "Phase Changes", text: "Melting" },
+          { category: "Phase Changes", text: "Boiling" },
+          { category: "Properties of Liquids", text: "Vapor Pressure" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the resistance to flow.", answer: "Viscosity" },
+        { sentence: "___ is proportional to average kinetic energy of particles.", answer: "Temperature" },
+        { sentence: "___ is the energy needed to increase surface area.", answer: "Surface Tension" },
+        { sentence: "___ is the point beyond which liquid and gas are indistinguishable.", answer: "Critical Point" },
+        { sentence: "___ is the point where all three phases coexist.", answer: "Triple Point" },
+      ],
+      memoryflip: [
+        { question: "A 2 kg substance has a specific heat of 500 J/kg·°C. How much heat is needed to raise the temperature from 20°C to 40°C?", answer: "20000 J" },
+        { question: "A 1 kg substance cools from 80°C to 50°C. If c = 400 J/kg·°C, how much heat is released?", answer: "12000 J" },
+        { question: "A 2 kg solid melts completely using 400,000 J of heat. What is its latent heat of fusion?", answer: "200000 J/kg" },
+        { question: "A substance absorbs 6000 J and its temperature rises from 30°C to 60°C. What is its heat capacity?", answer: "200 J/°C" },
+        { question: "A 1 kg liquid cools from 60°C to 20°C with c = 4200 J/kg·°C. How much heat is lost?", answer: "168000 J" },
+      ],
+      fighttime: [
+        { question: "A 2 kg substance has a specific heat of 500 J/kg·°C. How much heat is needed to raise the temperature from 20°C to 40°C?", answers: ["20000 J"] },
+        { question: "A 1 kg substance cools from 80°C to 50°C. If c = 400 J/kg·°C, how much heat is released?", answers: ["12000 J"] },
+        { question: "A 2 kg solid melts completely using 400,000 J of heat. What is its latent heat of fusion?", answers: ["200000 J/kg"] },
+        { question: "A substance absorbs 6000 J and its temperature rises from 30°C to 60°C. What is its heat capacity?", answers: ["200 J/°C"] },
+        { question: "A 1 kg liquid cools from 60°C to 20°C with c = 4200 J/kg·°C. How much heat is lost?", answers: ["168000 J"] },
+      ],
+      matchit: [
+        { question: "A 2 kg substance has a specific heat of 500 J/kg·°C. How much heat is needed to raise the temperature from 20°C to 40°C?", answer: "20000 J" },
+        { question: "A 1 kg substance cools from 80°C to 50°C. If c = 400 J/kg·°C, how much heat is released?", answer: "12000 J" },
+        { question: "A 2 kg solid melts completely using 400,000 J of heat. What is its latent heat of fusion?", answer: "200000 J/kg" },
+        { question: "A substance absorbs 6000 J and its temperature rises from 30°C to 60°C. What is its heat capacity?", answer: "200 J/°C" },
+        { question: "A 1 kg liquid cools from 60°C to 20°C with c = 4200 J/kg·°C. How much heat is lost?", answer: "168000 J" },
+      ],
+      guessword: [
+        { question: "A 2 kg substance has a specific heat of 500 J/kg·°C. How much heat is needed to raise the temperature from 20°C to 40°C?", answer: "20000 J" },
+        { question: "A 1 kg substance cools from 80°C to 50°C. If c = 400 J/kg·°C, how much heat is released?", answer: "12000 J" },
+        { question: "A 2 kg solid melts completely using 400,000 J of heat. What is its latent heat of fusion?", answer: "200000 J/kg" },
+        { question: "A substance absorbs 6000 J and its temperature rises from 30°C to 60°C. What is its heat capacity?", answer: "200 J/°C" },
+        { question: "A 1 kg liquid cools from 60°C to 20°C with c = 4200 J/kg·°C. How much heat is lost?", answer: "168000 J" },
+      ],
+      conceptpuzzle: [
+        { question: " Resistance to flow", answer: "Viscosity", hints: ["Flow", "Resistance"] },
+        { question: " proportional to average kinetic energy of particles", answer: "Temperature", hints: ["Kinetic energy", "Particles"] },
+        { question: " Energy needed to increase surface area", answer: "Surface Tension", hints: ["Surface area", "Energy"] },
+        { question: " Beyond this, liquid and gas are indistinguishable", answer: "Critical Point", hints: ["Liquid", "Gas"] },
+        { question: " All three phases coexist", answer: "Triple Point", hints: ["Three phases", "Coexist"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Viscosity ", order: 1 },
+          { id: "2", text: "is the resistance ", order: 2 },
+          { id: "3", text: "to flow.", order: 3 },
+        ],
+        // Puzzle 2 
+        [
+         { id: "1", text: "Temperature ", order: 1 },
+         { id: "2", text: "is proportional ", order: 2 },
+         { id: "3", text: "to average kinetic energy of particles.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Surface Tension ", order: 1 },
+          { id: "2", text: "is the energy needed ", order: 2 },
+          { id: "3", text: "to increase surface area.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Critical Point ", order: 1 },
+          { id: "2", text: "is the point beyond which ", order: 2 },
+          { id: "3", text: "liquid and gas are indistinguishable.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Triple Point ", order: 1 },
+          { id: "2", text: "is the point where ", order: 2 },
+          { id: "3", text: "all three phases coexist.", order: 3 },
+        ],
+      ]
+    },
+    'chem2-unit2': {
+      // Add your questions here
+      snake: [
+        {question: "moles solute per liter solution", answer: "Molarity"},
+        {question: "moles solute per kg solvent", answer: "Molality"},
+        {question: "solvent + solute", answer: "Solution"},
+        {question: "Maximum amount that dissolves at a given temperature.", answer: "Solubility" },
+        {question: "The one being dissolved", answer: "Solute" },
+      ],
+      wordsearch: [
+        {word: "MOLARITY"},
+        {word: "MOLALITY"},
+        {word: "SOLUTION"},
+        {word: "SOLUBILITY"},
+        {word: "SOLUTE"},
+      ],
+      dragdrop: {
+        categories: ["Concentration Terms", "Solution Components", "Solubility Concepts"],
+        items: [
+          { category: "Concentration Terms", text: "Molarity" },
+          { category: "Concentration Terms", text: "Molality" },
+          { category: "Solution Components", text: "Solvent" },
+          { category: "Solution Components", text: "Solute" },
+          { category: "Solubility Concepts", text: "Saturation" },
+          { category: "Solubility Concepts", text: "Supersaturation" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is moles solute per liter solution.", answer: "Molarity" },
+        { sentence: "___ is moles solute per kg solvent.", answer: "Molality" },
+        { sentence: "___ is solvent + solute.", answer: "Solution" },
+        { sentence: "___ is the maximum amount that dissolves at a given temperature.", answer: "Solubility" },
+        { sentence: "___ is the one being dissolved.", answer: "Solute" },
+      ],
+      memoryflip: [
+        { question: "A solution has i = 2, Kb = 0.5 °C·kg/mol, and m = 1.5 m. Find ΔTb.", answer: "1.5 °C" },
+        { question: "A solution has i = 1, Kf = 1.86 °C·kg/mol, and m = 2 m. Find ΔTf.", answer: "3.72 °C" },
+        { question: "A solution contains 2 mol solute in 1 L solution. Find molarity.", answer: "2 M" },
+        { question: "A solution has 1 mol solute in 0.5 kg solvent. Find molality.", answer: "2 m" },
+        { question: "A solution has 5 mol A and 5 mol B. Find mole fraction of A.", answer: "0.5" },
+      ],
+      fighttime: [
+        { question: "A solution has i = 2, Kb = 0.5 °C·kg/mol, and m = 1.5 m. Find ΔTb.", answers: ["1.5 °C"] },
+        { question: "A solution has i = 1, Kf = 1.86 °C·kg/mol, and m = 2 m. Find ΔTf.", answers: ["3.72 °C"] },
+        { question: "A solution contains 2 mol solute in 1 L solution. Find molarity.", answers: ["2 M"] },
+        { question: "A solution has 1 mol solute in 0.5 kg solvent. Find molality.", answers: ["2 m"] },
+        { question: "A solution has 5 mol A and 5 mol B. Find mole fraction of A.", answers: ["0.5"] },
+      ],
+      matchit: [
+        { question: "A solution has i = 2, Kb = 0.5 °C·kg/mol, and m = 1.5 m. Find ΔTb.", answer: "1.5 °C" },
+        { question: "A solution has i = 1, Kf = 1.86 °C·kg/mol, and m = 2 m. Find ΔTf.", answer: "3.72 °C" },
+        { question: "A solution contains 2 mol solute in 1 L solution. Find molarity.", answer: "2 M" },
+        { question: "A solution has 1 mol solute in 0.5 kg solvent. Find molality.", answer: "2 m" },
+        { question: "A solution has 5 mol A and 5 mol B. Find mole fraction of A.", answer: "0.5" },
+      ],
+      guessword: [
+        {question: "moles solute per liter solution", answer: "Molarity"},
+        {question: "moles solute per kg solvent", answer: "Molality"},
+        {question: "solvent + solute", answer: "Solution"},
+        {question: "Maximum amount that dissolves at a given temperature.", answer: "Solubility" },
+        {question: "The one being dissolved", answer: "Solute" },
+      ],
+      conceptpuzzle: [
+        { question: "moles solute per liter solution", answer: "Molarity", hints: ["Moles", "Liter"] },
+        { question: "moles solute per kg solvent", answer: "Molality", hints: ["Moles", "Kg"] },
+        { question: "solvent + solute", answer: "Solution", hints: ["Solvent", "Solute"] },
+        { question: "Maximum amount that dissolves at a given temperature.", answer: "Solubility", hints: ["Dissolves", "Temperature"] },
+        { question: "The one being dissolved", answer: "Solute", hints: ["Being dissolved"] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Molarity ", order: 1 },
+          { id: "2", text: "is moles solute ", order: 2 },
+          { id: "3", text: "per liter solution.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Molality ", order: 1 },
+         { id: "2", text: "is moles solute ", order: 2 },
+         { id: "3", text: "per kg solvent.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Solution ", order: 1 },
+          { id: "2", text: "is solvent + ", order: 2 },
+          { id: "3", text: "solute.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Solubility ", order: 1 },
+          { id: "2", text: "is the maximum amount ", order: 2 },
+          { id: "3", text: "that dissolves at a given temperature.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "Solute ", order: 1 },
+          { id: "2", text: "is the one ", order: 2 },
+          { id: "3", text: "being dissolved.", order: 3 },
+        ],
+      ]
+      
+    },
+    'chem2-unit3': {
+      // Add your questions here
+      snake: [
+        {question:"heat content at constant pressure.", answer:"Enthalpy"},
+        {question: 'ΔH < 0', answer: 'Exothermic'},
+        {question: 'ΔH > 0', answer: 'Endothermic'},
+        {question: 'The total enthalpy change is independent of the path taken.', answer: 'Hess\'s Law'},
+      ],
+      wordsearch: [
+        {word: "ENTHALPY"},
+        {word: "EXOTHERMIC"},
+        {word: "ENDOTHERMIC"},
+        {word: "HESS'S LAW"},
+      ],
+      dragdrop: {
+        categories: ["Thermodynamic Terms", "Reaction Types", "Laws of Thermodynamics"],
+        items: [
+          { category: "Thermodynamic Terms", text: "Enthalpy" },
+          { category: "Reaction Types", text: "Exothermic" },
+          { category: "Reaction Types", text: "Endothermic" },
+          { category: "Laws of Thermodynamics", text: "Hess's Law" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is heat content at constant pressure.", answer: "Enthalpy" },
+        { sentence: "___ indicates ΔH < 0.", answer: "Exothermic" },
+        { sentence: "___ indicates ΔH > 0.", answer: "Endothermic" },
+        { sentence: "___ states that the total enthalpy change is independent of the path taken.", answer: "Hess's Law" },
+      ],
+      memoryflip: [
+        { question: "Enthalpy", answer: "heat content at constant pressure." },
+        { question: "Exothermic", answer: "ΔH < 0" },
+        { question: "Endothermic", answer: "ΔH > 0" },
+        { question: "Hess's Law", answer: "The total enthalpy change is independent of the path taken." },
+      ],
+      fighttime: [
+        { question: "What is heat content at constant pressure?", answers: ["Enthalpy"] },
+        { question: "What indicates ΔH < 0?", answers: ["Exothermic"] },
+        { question: "What indicates ΔH > 0?", answers: ["Endothermic"] },
+        { question: "What states that the total enthalpy change is independent of the path taken?", answers: ["Hess's Law"] },
+      ],
+      matchit: [
+        { question: "Enthalpy", answer: "heat content at constant pressure." },
+        { question: "Exothermic", answer: "ΔH < 0" },
+        { question: "Endothermic", answer: "ΔH > 0" },
+        { question: "Hess's Law", answer: "The total enthalpy change is independent of the path taken." },
+      ],
+      guessword: [
+        {question:"heat content at constant pressure.", answer:"Enthalpy"},
+        {question: 'ΔH < 0', answer: 'Exothermic'},
+        {question: 'ΔH > 0', answer: 'Endothermic'},
+        {question: 'The total enthalpy change is independent of the path taken.', answer: 'Hess\'s Law'},
+      ],
+      conceptpuzzle: [
+        { question: "heat content at constant pressure.", answer: "Enthalpy", hints: ["Heat", "Pressure"] },
+        { question: 'ΔH < 0', answer: 'Exothermic', hints: ['Negative ΔH', 'Releases heat'] },
+        { question: 'ΔH > 0', answer: 'Endothermic', hints: ['Positive ΔH', 'Absorbs heat'] },
+        { question: 'The total enthalpy change is independent of the path taken.', answer: 'Hess\'s Law', hints: ['Enthalpy change', 'Path independence'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Enthalpy ", order: 1 },
+          { id: "2", text: "is heat content ", order: 2 },
+          { id: "3", text: "at constant pressure.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Exothermic ", order: 1 },
+         { id: "2", text: "indicates ", order: 2 },
+         { id: "3", text: "ΔH < 0.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Endothermic ", order: 1 },
+          { id: "2", text: "indicates ", order: 2 },
+          { id: "3", text: "ΔH > 0.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Hess's Law ", order: 1 },
+          { id: "2", text: "states that the total ", order: 2 },
+          { id: "3", text: "enthalpy change is independent of the path taken.", order: 3 },
+        ],
+      ]
+    },
+    'chem2-unit4': {
+      // Add your questions here
+      snake: [
+        {question: 'change in concentration per unit time', answer: 'Reaction Rate'},
+        {question: 'Speed up reaction without being consumed', answer: 'Catalyst'},
+        {question: 'Biological catalysts (highly specific)', answer: 'Enzymes'},
+        {question: 'Particles move faster with more energy', answer: 'Temperature'},
+      ],
+      wordsearch: [
+        {word: "REACTION RATE"},
+        {word: "CATALYST"},
+        {word: "ENZYMES"},
+        {word: "TEMPERATURE"},
+      ],
+      dragdrop: {
+        categories: ["Kinetic Terms", "Reaction Order", "Factors Affecting Rate"],
+        items: [
+          { category: "Kinetic Terms", text: "Reaction Rate" },
+          { category: "Reaction Order", text: "ZERO ORDER: Rate = k" },
+          { category: "Reaction Order", text: "FIRST ORDER: Rate = k[A]" },
+          { category: "Factors Affecting Rate", text: "Temperature" },
+          { category: "Factors Affecting Rate", text: "Catalyst" },
+          { category: "Factors Affecting Rate", text: "Concentration" },
+          { category: 'Kinetic Terms', text: 'Activation Energy' },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is change in concentration per unit time.", answer: "Reaction Rate" },
+        { sentence: "___ speed up reaction without being consumed.", answer: "Catalyst" },
+        { sentence: "___ are biological catalysts (highly specific).", answer: "Enzymes" },
+        { sentence: "___ particles move faster with more energy.", answer: "Temperature" },
+      ],
+      memoryflip: [
+        { question: "Reaction Rate", answer: "change in concentration per unit time" },
+        { question: "Catalyst", answer: "Speed up reaction without being consumed" },
+        { question: "Enzymes", answer: "Biological catalysts (highly specific)" },
+        { question: "Temperature", answer: "Particles move faster with more energy" },
+      ],
+      fighttime: [
+        { question: "What is change in concentration per unit time?", answers: ["Reaction Rate"] },
+        { question: "What speeds up reaction without being consumed?", answers: ["Catalyst"] },
+        { question: "What are biological catalysts (highly specific)?", answers: ["Enzymes"] },
+        { question: "What causes particles to move faster with more energy?", answers: ["Temperature"] },
+      ],
+      matchit: [
+        { question: "Reaction Rate", answer: "change in concentration per unit time" },
+        { question: "Catalyst", answer: "Speed up reaction without being consumed" },
+        { question: "Enzymes", answer: "Biological catalysts (highly specific)" },
+        { question: "Temperature", answer: "Particles move faster with more energy" },
+      ],
+      guessword: [
+        {question: 'change in concentration per unit time', answer: 'Reaction Rate'},
+        {question: 'Speed up reaction without being consumed', answer: 'Catalyst'},
+        {question: 'Biological catalysts (highly specific)', answer: 'Enzymes'},
+        {question: 'Particles move faster with more energy', answer: 'Temperature'},
+      ],
+      conceptpuzzle: [
+        { question: 'change in concentration per unit time', answer: 'Reaction Rate', hints: ['Concentration', 'Time'] },
+        { question: 'Speed up reaction without being consumed', answer: 'Catalyst', hints: ['Speed up', 'Not consumed'] },
+        { question: 'Biological catalysts (highly specific)', answer: 'Enzymes', hints: ['Biological', 'Catalysts'] },
+        { question: 'Particles move faster with more energy', answer: 'Temperature', hints: ['Particles', 'Energy'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Reaction Rate ", order: 1 },
+          { id: "2", text: "is change in concentration ", order: 2 },
+          { id: "3", text: "per unit time.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Catalyst ", order: 1 },
+         { id: "2", text: "speed up reaction ", order: 2 },
+         { id: "3", text: "without being consumed.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Enzymes ", order: 1 },
+          { id: "2", text: "are biological catalysts ", order: 2 },
+          { id: "3", text: "(highly specific).", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Temperature ", order: 1 },
+          { id: "2", text: "particles move faster ", order: 2 },
+          { id: "3", text: "with more energy.", order: 3 },
+        ],
+      ]
+    },
+    'chem2-unit5': {
+      // Add your questions here
+      snake: [
+        {question: 'A spontaneous process occurs without continuous external input.', answer: 'Spontaneity'},
+        {question: 'Measure of disorder or randomness.', answer: 'Entropy'},
+        {question: 'determines which factor dominatess', answer: 'Temperature'},
+        { question: 'ΔG < 0', answer: 'Spontaneous'},
+      ],
+      wordsearch: [
+        {word: "SPONTANEITY"},
+        {word: "ENTROPY"},
+        {word: "TEMPERATURE"},
+        {word: "SPONTANEOUS"},
+      ],
+      dragdrop: {
+        categories: ["Thermodynamic Concepts", "Spontaneity Factors", "Gibbs Free Energy"],
+        items: [
+          { category: "Thermodynamic Concepts", text: "Spontaneity" },
+          { category: "Thermodynamic Concepts", text: "Entropy" },
+          { category: "Spontaneity Factors", text: "Temperature" },
+          { category: "Gibbs Free Energy", text: "ΔG < 0" },
+          { category: "Gibbs Free Energy", text: "ΔG > 0" },
+          { category: "Gibbs Free Energy", text: "ΔG = 0" },
+          { category: "Spontaneity Factors", text: "Enthalpy" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is a spontaneous process that occurs without continuous external input.", answer: "Spontaneity" },
+        { sentence: "___ is a measure of disorder or randomness.", answer: "Entropy" },
+        { sentence: "___ determines which factor dominates.", answer: "Temperature" },
+        { sentence: "___ indicates ΔG < 0.", answer: "Spontaneous" },
+        { sentence: "___ indicates ΔG > 0.", answer: "Non-Spontaneous" },
+      ],
+      memoryflip: [
+        { question: "ΔH = −100 kJ, ΔS = −200 J/K, T = 300 K. Find ΔG.", answer: "−40 kJ" },
+        { question: "ΔH = 50 kJ, ΔS = 100 J/K, T = 298 K. Find ΔG.", answer: "20.2 kJ" },
+        { question: "ΔH = −80 kJ, ΔS = 50 J/K, T = 400 K. Find ΔG.", answer: "−100 kJ" },
+        { question: "N₂ + 3H₂ → 2NH₃", answer: "−32 kJ" },
+        { question: "ΔH = 30 kJ, ΔS = −150 J/K, T = 298 K. Find ΔG.", answer: "74.7 kJ" },
+      ],
+      fighttime: [
+        { question: "ΔH = −100 kJ, ΔS = −200 J/K, T = 300 K. Find ΔG.", answers: ["−40 kJ"] },
+        { question: "ΔH = 50 kJ, ΔS = 100 J/K, T = 298 K. Find ΔG.", answers: ["20.2 kJ"] },
+        { question: "ΔH = −80 kJ, ΔS = 50 J/K, T = 400 K. Find ΔG.", answers: ["−100 kJ"] },
+        { question: "N₂ + 3H₂ → 2NH₃", answers: ["−32 kJ"] },
+        { question: "ΔH = 30 kJ, ΔS = −150 J/K, T = 298 K. Find ΔG.", answers: ["74.7 kJ"] },
+      ],
+      matchit: [
+        { question: "ΔH = −100 kJ, ΔS = −200 J/K, T = 300 K. Find ΔG.", answer: "−40 kJ" },
+        { question: "ΔH = 50 kJ, ΔS = 100 J/K, T = 298 K. Find ΔG.", answer: "20.2 kJ" },
+        { question: "ΔH = −80 kJ, ΔS = 50 J/K, T = 400 K. Find ΔG.", answer: "−100 kJ" },
+        { question: "N₂ + 3H₂ → 2NH₃", answer: "−32 kJ" },
+        { question: "ΔH = 30 kJ, ΔS = −150 J/K, T = 298 K. Find ΔG.", answer: "74.7 kJ" },
+      ],
+      guessword: [
+        {question: 'A spontaneous process occurs without continuous external input.', answer: 'Spontaneity'},
+        {question: 'Measure of disorder or randomness.', answer: 'Entropy'},
+        {question: 'determines which factor dominatess', answer: 'Temperature'},
+        { question: 'ΔG < 0', answer: 'Spontaneous' },
+        { question: 'ΔG > 0', answer: 'Non-Spontaneous' },
+      ],
+      conceptpuzzle: [
+        { question: 'A spontaneous process occurs without continuous external input.', answer: 'Spontaneity', hints: ['Spontaneous', 'No input'] },
+        { question: 'Measure of disorder or randomness.', answer: 'Entropy', hints: ['Disorder', 'Randomness'] },
+        { question: 'determines which factor dominatess', answer: 'Temperature', hints: ['Factor', 'Dominates'] },
+        { question: 'ΔG < 0', answer: 'Spontaneous', hints: ['Negative ΔG', 'Spontaneous'] },
+        { question: 'ΔG > 0', answer: 'Non-Spontaneous', hints: ['Positive ΔG', 'Non-Spontaneous'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Spontaneity ", order: 1 },
+          { id: "2", text: "is a spontaneous process ", order: 2 },
+          { id: "3", text: "that occurs without continuous external input.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Entropy ", order: 1 },
+         { id: "2", text: "is a measure of disorder ", order: 2 },
+         { id: "3", text: "or randomness.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Temperature ", order: 1 },
+          { id: "2", text: "determines which factor ", order: 2 },
+          { id: "3", text: "dominates.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "The entropy  ", order: 1 },
+          { id: "2", text: "of the universe ", order: 2 },
+          { id: "3", text: "always increases", order: 3 },
+          { id: "4", text: "for spontaneous processes.", order: 4 },
+      ],
+      // Puzzle 5
+        [
+          { id: "1", text: "Gibb's free energy ", order: 1 },
+          { id: '2', text: 'predicts', order: 2 },
+          { id: "3", text: "spontaneity of a process.", order: 3 },
+        ],
+      ]
+      
+    },
+    'chem2-unit6': {
+      // Add your questions here
+      snake: [
+        {question: 'the state of a reversible reaction where the rate of the forward reaction equals the rate of the reverse reaction.', answer: 'Equilibrium'},
+        {question:'what remains constant but reactions continue!', answer:'Concentration'},
+      ],
+      wordsearch: [
+        {word: "EQUILIBRIUM"},
+        {word: "CONCENTRATION"},
+        {word: 'DYNAMIC'},
+        {word: 'REACTION'},
+        {word: 'RATES'},
+      ],
+      dragdrop: {
+        categories: ["Equilibrium Concepts", "Reaction Dynamics"],
+        items: [
+          { category: "Equilibrium Concepts", text: "Equilibrium" },
+          { category: "Equilibrium Concepts", text: "Concentration" },
+          { category: "Reaction Dynamics", text: "Dynamic" },
+          { category: "Reaction Dynamics", text: "Reaction Rates" },
+        ], 
+      },
+      fillblanks: [
+        { sentence: "___ is the state of a reversible reaction where the rate of the forward reaction equals the rate of the reverse reaction.", answer: "Equilibrium" },
+        { sentence: "___ remains constant but reactions continue.", answer: "Concentration" },
+        { sentence: "___ describes a system where reactions are ongoing.", answer: "Dynamic" },
+        { sentence: '___ are the speeds of the forward and reverse reactions.', answer: "Reaction Rates" },
+      ],
+      memoryflip: [
+        { question: "N₂ + 3H₂ ⇌ 2NH₃", answer: "11.85" },
+        { question: "H₂ + I₂ ⇌ 2HI", answer: "4" },
+        { question: "2SO₂ + O₂ ⇌ 2SO₃", answer: "20." },
+        { question: "CO + Cl₂ ⇌ COCl₂", answer: "8" },
+      ],
+      fighttime: [
+        { question: "N₂ + 3H₂ ⇌ 2NH₃", answers: ["11.85"] },
+        { question: "H₂ + I₂ ⇌ 2HI", answers: ["4"] },
+        { question: "2SO₂ + O₂ ⇌ 2SO₃", answers: ["20."] },
+        { question: "CO + Cl₂ ⇌ COCl₂", answers: ["8"] },
+      ],
+      matchit: [
+        { question: "N₂ + 3H₂ ⇌ 2NH₃", answer: "11.85" },
+        { question: "H₂ + I₂ ⇌ 2HI", answer: "4" },
+        { question: "2SO₂ + O₂ ⇌ 2SO₃", answer: "20." },
+        { question: "CO + Cl₂ ⇌ COCl₂", answer: "8" },
+      ],
+      guessword: [
+        {question: 'the state of a reversible reaction where the rate of the forward reaction equals the rate of the reverse reaction.', answer: 'Equilibrium'},
+        {question:'what remains constant but reactions continue!', answer:'Concentration'},
+        {question:'describes a system where reactions are ongoing.', answer:'Dynamic'},
+        {question:'are the speeds of the forward and reverse reactions.', answer:'Reaction Rates'},
+      ],
+      conceptpuzzle: [
+        { question: 'the state of a reversible reaction where the rate of the forward reaction equals the rate of the reverse reaction.', answer: 'Equilibrium', hints: ['Reversible', 'Equal rates'] },
+        { question:'what remains constant but reactions continue!', answer:'Concentration', hints: ['Constant', 'Ongoing reactions'] },
+        { question:'describes a system where reactions are ongoing.', answer:'Dynamic', hints: ['Ongoing', 'Reactions'] },
+        { question:'are the speeds of the forward and reverse reactions.', answer:'Reaction Rates', hints: ['Speeds', 'Reactions'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Equilibrium ", order: 1 },
+          { id: "2", text: "is the state of a reversible reaction ", order: 2 },
+          { id: "3", text: "where the rate ", order: 3 },
+          {id: "4", text: "of the forward reaction equals ", order: 4 },
+          {id: "5", text: "the rate of the reverse reaction.", order: 5 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Concentration ", order: 1 },
+         { id: "2", text: "remains constant ", order: 2 },
+         { id: "3", text: "but reactions continue.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Dynamic ", order: 1 },
+          { id: "2", text: "describes a system ", order: 2 },
+          { id: "3", text: "where reactions are ongoing.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Reaction Rates ", order: 1 },
+          { id: "2", text: "are the speeds ", order: 2 },
+          { id: "3", text: "of the forward and reverse reactions.", order: 3 },
+        ],
+      ],
+    },
+    'chem2-unit7': {
+      // Add your questions here
+      snake:[
+        {question:'substance that increases H+ concentration', answer:'Acid'},
+        {question:'substance that decreases H+ concentration', answer:'Base'},
+        {question:'what is the universal solvent?', answer:'Water'},
+        {question:'pH < 7', answer:'Acidic'},
+        {question:'pH > 7', answer:'Basic'},
+      ],
+      wordsearch:[
+        {word:'ACID'},
+        {word:'BASE'},
+        {word:'WATER'},
+        {word:'ACIDIC'},
+        {word:'BASIC'},
+      ],
+      dragdrop:{
+        categories:["Acid-Base Concepts","pH Scale"],
+        items:[
+          {category:"Acid-Base Concepts", text:"Acid"},
+          {category:"Acid-Base Concepts", text:"Base"},
+          {category:"Acid-Base Concepts", text:"Water"},
+          {category:"pH Scale", text:"pH < 7"},
+          {category:"pH Scale", text:"pH > 7"},
+        ],
+      },
+      fillblanks:[
+        {sentence:'___ is a substance that increases H+ concentration.', answer:'Acid'},
+        {sentence:'___ is a substance that decreases H+ concentration.', answer:'Base'},
+        {sentence:'___ is the universal solvent.', answer:'Water'},
+        {sentence:'___ indicates pH < 7.', answer:'Acidic'},
+        {sentence:'___ indicates pH > 7.', answer:'Basic'},
+      ],
+      memoryflip:[
+        {question:'pKa = 4.76, [base] = 0.2 M, [acid] = 0.1 M. Find pH.', answer:'5.06'},
+        {question:'[H⁺] = 1 × 10⁻³ M. Find pH.', answer:'3'},
+        {question:'pH = 4. Find pOH.', answer:'10'},
+        {question:'pOH = 3. Find pH.', answer:'11'},
+        {question:'pH = 2.5. Find [H⁺].', answer:'3.16 × 10⁻³ M'},
+      ],
+      fighttime:[
+        {question:'pKa = 4.76, [base] = 0.2 M, [acid] = 0.1 M. Find pH.', answers:['5.06']},
+        {question:'[H⁺] = 1 × 10⁻³ M. Find pH.', answers:['3']},
+        {question:'pH = 4. Find pOH.', answers:['10']},
+        {question:'pOH = 3. Find pH.', answers:['11']},
+        {question:'pH = 2.5. Find [H⁺].', answers:['3.16 × 10⁻³ M']},
+      ],
+      matchit:[
+        {question:'pKa = 4.76, [base] = 0.2 M, [acid] = 0.1 M. Find pH.', answer:'5.06'},
+        {question:'[H⁺] = 1 × 10⁻³ M. Find pH.', answer:'3'},
+        {question:'pH = 4. Find pOH.', answer:'10'},
+        {question:'pOH = 3. Find pH.', answer:'11'},
+        {question:'pH = 2.5. Find [H⁺].', answer:'3.16 × 10⁻³ M'},
+      ],
+      guessword:[
+        {question:'substance that increases H+ concentration', answer:'Acid'},
+        {question:'substance that decreases H+ concentration', answer:'Base'},
+        {question:'what is the universal solvent?', answer:'Water'},
+        {question:'pH < 7', answer:'Acidic'},
+        {question:'pH > 7', answer:'Basic'},
+      ],
+      conceptpuzzle:[
+        {question:'substance that increases H+ concentration', answer:'Acid', hints:['Increases','H+']},
+        {question:'substance that decreases H+ concentration', answer:'Base', hints:['Decreases','H+']},
+        {question:'what is the universal solvent?', answer:'Water', hints:['Universal','Solvent']},
+        {question:'pH < 7', answer:'Acidic', hints:['pH','Less than 7']},
+        {question:'pH > 7', answer:'Basic', hints:['pH','Greater than 7']},
+      ],
+      jigsaw:[
+        // Puzzle 1
+        [
+          { id: "1", text: "Acid ", order: 1 },
+          { id: "2", text: "is a substance that ", order: 2 },
+          { id: "3", text: "increases H+ concentration.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "Base ", order: 1 },
+         { id: "2", text: "is a substance that ", order: 2 },
+         { id: "3", text: "decreases H+ concentration.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Water ", order: 1 },
+          { id: "2", text: "is the universal ", order: 2 },
+          { id: "3", text: "solvent.", order: 3 },
+        ],
+      ],
+    },
+    'chem2-unit8': {
+      // Add your questions here
+      snake: [
+        {question: 'describes the equilibrium between a solid and its dissolved ions.', answer: 'KSP'},
+        {question: 'what is the mixture of AgCl in NaCl called?', answer: 'Solution'},
+        {question: 'Q < Ksp', answer: 'Unsaturated'},
+        {question: 'Q = Ksp', answer: 'Saturated'},
+        {question: 'Q > Ksp', answer: 'Supersaturated'},
+      ],
+      wordsearch: [
+        {word: 'KSP'},
+        {word: 'SOLUTION'},
+        {word: 'UNSATURATED'},
+        {word: 'SATURATED'},
+        {word: 'SUPERSATURATED'},
+      ],
+      dragdrop: {
+        categories: ["Solubility Concepts", "Saturation States"],
+        items: [
+          { category: "Solubility Concepts", text: "KSP" },
+          { category: "Solubility Concepts", text: "Solution" },
+          { category: "Saturation States", text: "Q < Ksp" },
+          { category: "Saturation States", text: "Q = Ksp" },
+          { category: "Saturation States", text: "Q > Ksp" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ describes the equilibrium between a solid and its dissolved ions.", answer: "KSP" },
+        { sentence: "___ is the mixture of AgCl in NaCl.", answer: "Solution" },
+        { sentence: "___ indicates Q < Ksp.", answer: "Unsaturated" },
+        { sentence: "___ indicates Q = Ksp.", answer: "Saturated" },
+        { sentence: "___ indicates Q > Ksp.", answer: "Supersaturated" },
+      ],
+      memoryflip: [
+        { question: "KSP", answer: "describes the equilibrium between a solid and its dissolved ions." },
+        { question: "Solution", answer: "the mixture of AgCl in NaCl." },
+        { question: "Unsaturated", answer: "indicates Q < Ksp." },
+        { question: "Saturated", answer: "indicates Q = Ksp." },
+        { question: "Supersaturated", answer: "indicates Q > Ksp." },
+      ],
+      fighttime: [
+        { question: "What describes the equilibrium between a solid and its dissolved ions?", answers: ["KSP"] },
+        { question: "What is the mixture of AgCl in NaCl?", answers: ["Solution"] },
+        { question: "What indicates Q < Ksp?", answers: ["Unsaturated"] },
+        { question: "What indicates Q = Ksp?", answers: ["Saturated"] },
+        { question: "What indicates Q > Ksp?", answers: ["Supersaturated"] },
+      ],
+      matchit: [
+        { question: "KSP", answer: "describes the equilibrium between a solid and its dissolved ions." },
+        { question: "Solution", answer: "the mixture of AgCl in NaCl." },
+        { question: "Unsaturated", answer: "indicates Q < Ksp." },
+        { question: "Saturated", answer: "indicates Q = Ksp." },
+        { question: "Supersaturated", answer: "indicates Q > Ksp." },
+      ],
+      guessword: [
+        {question: 'describes the equilibrium between a solid and its dissolved ions.', answer: 'KSP'},
+        {question: 'what is the mixture of AgCl in NaCl called?', answer: 'Solution'},
+        {question: 'Q < Ksp', answer: 'Unsaturated'},
+        {question: 'Q = Ksp', answer: 'Saturated'},
+        {question: 'Q > Ksp', answer: 'Supersaturated'},
+      ],
+      conceptpuzzle: [
+        { question: 'describes the equilibrium between a solid and its dissolved ions.', answer: 'KSP', hints: ['Equilibrium', 'Dissolved ions'] },
+        { question: 'what is the mixture of AgCl in NaCl called?', answer: 'Solution', hints: ['Mixture', 'AgCl in NaCl'] },
+        { question: 'Q < Ksp', answer: 'Unsaturated', hints: ['Less than Ksp', 'Not full'] },
+        { question: 'Q = Ksp', answer: 'Saturated', hints: ['Equal to Ksp', 'Full'] },
+        { question: 'Q > Ksp', answer: 'Supersaturated', hints: ['Greater than Ksp', 'Over full'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "KSP ", order: 1 },
+          { id: "2", text: "describes the equilibrium ", order: 2 },
+          { id: "3", text: "between a solid and its dissolved ions.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: '1', text: 'Adding an ion', order: 1 },
+         { id: '2', text: 'that\'s already in solution', order: 2 },
+         { id: '3', text: 'reduces solubility', order: 3}
+        ],
+        // Puzzle 3
+        [ 
+          { id: '1', text: 'Ksp describes', order: 1 },
+          { id: '2', text: 'the equilibrium', order: 2},
+          { id: '3', text: 'between a solid', order: 3},
+          { id: '4', text: 'and its dissolved ions.', order: 4}
+        ]
+      ]
+    },
+    'chem2-unit9': {
+      // Add your questions here
+      snake: [
+        { question: 'Loss of electrons', answer: 'OXIDATION' },
+        { question: 'Gain of electrons', answer: 'REDUCTION' },
+        { question: 'Oxidation occurs here', answer: 'ANODE' },
+        { question: 'Reduction occurs here', answer: 'CATHODE' },
+      ],
+      wordsearch: [
+        { word: 'OXIDATION' },
+        { word: 'REDUCTION' },
+        { word: 'ANODE' },
+        { word: 'CATHODE' },
+      ],
+      dragdrop: {
+        categories: ["Redox Concepts", "Electrode Functions"],
+        items: [
+          { category: "Redox Concepts", text: "OXIDATION" },
+          { category: "Redox Concepts", text: "REDUCTION" },
+          { category: "Electrode Functions", text: "ANODE" },
+          { category: "Electrode Functions", text: "CATHODE" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the loss of electrons.", answer: "OXIDATION" },
+        { sentence: "___ is the gain of electrons.", answer: "REDUCTION" },
+        { sentence: "___ is where oxidation occurs.", answer: "ANODE" },
+        { sentence: "___ is where reduction occurs.", answer: "CATHODE" },
+      ],
+      memoryflip: [
+        { question: "E°cathode = +0.80 V, E°anode = 0.34 V. Find E°cell.", answer: "0.46 V" },
+        { question: "E°cathode = +1.23 V, E°anode = 0.00 V. Find E°cell.", answer: "1.23 V" },
+        { question: "E°cell = 1.10 V, n = 2 mol e⁻, F = 96500 C/mol. Find ΔG°.", answer: "−2.12 × 10⁵ J" },
+        { question: "E°cell = 0.80 V, n = 1 mol e⁻, F = 96500 C/mol. Find ΔG°.", answer: "−7.72 × 10⁴ J" },
+      ],
+      fighttime: [
+        { question: "E°cathode = +0.80 V, E°anode = 0.34 V. Find E°cell.", answers: ["0.46 V"] },
+        { question: "E°cathode = +1.23 V, E°anode = 0.00 V. Find E°cell.", answers: ["1.23 V"] },
+        { question: "E°cell = 1.10 V, n = 2 mol e⁻, F = 96500 C/mol. Find ΔG°.", answers: ["−2.12 × 10⁵ J"] },
+        { question: "E°cell = 0.80 V, n = 1 mol e⁻, F = 96500 C/mol. Find ΔG°.", answers: ["−7.72 × 10⁴ J"] },
+      ],
+      matchit: [
+        { question: "E°cathode = +0.80 V, E°anode = 0.34 V. Find E°cell.", answer: "0.46 V" },
+        { question: "E°cathode = +1.23 V, E°anode = 0.00 V. Find E°cell.", answer: "1.23 V" },
+        { question: "E°cell = 1.10 V, n = 2 mol e⁻, F = 96500 C/mol. Find ΔG°.", answer: "−2.12 × 10⁵ J" },
+        { question: "E°cell = 0.80 V, n = 1 mol e⁻, F = 96500 C/mol. Find ΔG°.", answer: "−7.72 × 10⁴ J" }
+,
+      ],
+      guessword: [
+        { question: 'Loss of electrons', answer: 'OXIDATION' },
+        { question: 'Gain of electrons', answer: 'REDUCTION' },
+        { question: 'Oxidation occurs here', answer: 'ANODE' },
+        { question: 'Reduction occurs here', answer: 'CATHODE' },
+        { question: 'Unwanted oxidation of metals', answer: 'CORROSION' },
+        { question: 'Non-spontaneous reactions driven by electricity', answer: 'ELECTROLYSIS' },
+      ],
+      conceptpuzzle: [
+        { question: 'Loss of electrons', answer: 'OXIDATION', hints: ['Electrons', 'Loss'] },
+        { question: 'Gain of electrons', answer: 'REDUCTION', hints: ['Electrons', 'Gain'] },
+        { question: 'Oxidation occurs here', answer: 'ANODE', hints: ['Oxidation', 'Location'] },
+        { question: 'Reduction occurs here', answer: 'CATHODE', hints: ['Reduction', 'Location'] },
+        { question: 'Unwanted oxidation of metals', answer: 'CORROSION', hints: ['Oxidation', 'Metals'] },
+        { question: 'Non-spontaneous reactions driven by electricity', answer: 'ELECTROLYSIS', hints: ['Electricity', 'Reactions'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "OXIDATION ", order: 1 },
+          { id: "2", text: "is the loss ", order: 2 },
+          { id: "3", text: "of electrons.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+         { id: "1", text: "REDUCTION ", order: 1 },
+         { id: "2", text: "is the gain ", order: 2 },
+         { id: "3", text: "of electrons.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "Electrolysis ", order: 1 },
+          { id: "2", text: "is non-spontaneous reactions ", order: 2 },
+          { id: "3", text: "driven by electricity.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "Corrosion ", order: 1 },
+          { id: "2", text: "is unwanted oxidation ", order: 2 },
+          { id: "3", text: "of metals.", order: 3 },
+        ],
+      ]
+    },
+  },
+  'physics-1': {
+    'phys1-unit1': {
+      // Add your questions here
+      snake: [
+        {question: 'Magnitude only', answer: 'SCALAR'},
+        {question: 'Magnitude and direction', answer: 'VECTOR'},
+        {question: 'describes motion without considering forces.', answer: 'KINEMATICS'},
+        {question: 'rate of change of displacement', answer: 'VELOCITY'},
+        {question: 'rate of change of velocity', answer: 'ACCELERATION'},
+      ],
+      wordsearch: [
+        {word: "SCALAR"},
+        {word: "VECTOR"},
+        {word: "KINEMATICS"},
+        {word: "VELOCITY"},
+        {word: "ACCELERATION"},
+
+      ],
+      dragdrop: {
+        categories: ["Physical Quantities", "Motion Concepts"],
+        items: [
+          { category: "Physical Quantities", text: "SCALAR" },
+          { category: "Physical Quantities", text: "VECTOR" },
+          { category: "Motion Concepts", text: "KINEMATICS" },
+          { category: "Motion Concepts", text: "VELOCITY" },
+          { category: "Motion Concepts", text: "ACCELERATION" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ describes quantities with magnitude only.", answer: "SCALAR" },
+        { sentence: "___ describes quantities with magnitude and direction.", answer: "VECTOR" },
+        { sentence: "___ describes motion without considering forces.", answer: "KINEMATICS" },
+        { sentence: "___ is the rate of change of displacement.", answer: "VELOCITY" },
+        { sentence: "___ is the rate of change of velocity.", answer: "ACCELERATION" },
+      ],
+      memoryflip: [
+        { question: "A car starts from rest and accelerates at 2 m/s² for 5 seconds. What is its final velocity?", answer: "10 m/s" },
+        { question: "A car increases its speed from 5 m/s to 15 m/s in 5 seconds. What is its acceleration?", answer: "2 m/s²" },
+        { question: "A bus accelerates uniformly at 1.5 m/s² for 6 seconds. What is the change in velocity?", answer: "9 m/s" },
+        { question: "A runner starts from rest and accelerates at 3 m/s² for 4 seconds. What is the runner's final velocity?", answer: "12 m/s" },
+        { question: "A car increases its speed from 5 m/s to 15 m/s. If its acceleration is 2 m/s², how long does it take?", answer: "5 seconds" },
+      ],
+      fighttime: [
+        { question: "A car starts from rest and accelerates at 2 m/s² for 5 seconds. What is its final velocity?", answers: ["10 m/s"] },
+        { question: "A car increases its speed from 5 m/s to 15 m/s in 5 seconds. What is its acceleration?", answers: ["2 m/s²"] },
+        { question: "A bus accelerates uniformly at 1.5 m/s² for 6 seconds. What is the change in velocity?", answers: ["9 m/s"] },
+        { question: "A runner starts from rest and accelerates at 3 m/s² for 4 seconds. What is the runner's final velocity?", answers: ["12 m/s"] },
+        { question: "A car increases its speed from 5 m/s to 15 m/s. If its acceleration is 2 m/s², how long does it take?", answers: ["5 seconds"] },
+      ],
+      matchit: [
+        { question: "A car starts from rest and accelerates at 2 m/s² for 5 seconds. What is its final velocity?", answer: "10 m/s" },
+        { question: "A car increases its speed from 5 m/s to 15 m/s in 5 seconds. What is its acceleration?", answer: "2 m/s²" },
+        { question: "A bus accelerates uniformly at 1.5 m/s² for 6 seconds. What is the change in velocity?", answer: "9 m/s" },
+        { question: "A runner starts from rest and accelerates at 3 m/s² for 4 seconds. What is the runner's final velocity?", answer: "12 m/s" },
+        { question: "A car increases its speed from 5 m/s to 15 m/s. If its acceleration is 2 m/s², how long does it take?", answer: "5 seconds" },
+      ],
+      guessword: [
+        {question: 'Describes quantities with magnitude only.', answer: 'SCALAR'},
+        {question: 'Describes quantities with magnitude and direction.', answer: 'VECTOR'},
+        {question: 'Describes motion without considering forces.', answer: 'KINEMATICS'},
+        {question: 'Rate of change of displacement.', answer: 'VELOCITY'},
+        {question: 'Rate of change of velocity.', answer: 'ACCELERATION'},
+      ],
+      conceptpuzzle: [
+        { question: 'Describes quantities with magnitude only.', answer: 'SCALAR', hints: ['Magnitude', 'Only'] },
+        { question: 'Describes quantities with magnitude and direction.', answer: 'VECTOR', hints: ['Magnitude', 'Direction'] },
+        { question: 'Describes motion without considering forces.', answer: 'KINEMATICS', hints: ['Motion', 'No forces'] },
+        { question: 'Rate of change of displacement.', answer: 'VELOCITY', hints: ['Displacement', 'Change rate'] },
+        { question: 'Rate of change of velocity.', answer: 'ACCELERATION', hints: ['Velocity', 'Change rate'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "SCALAR ", order: 1 },
+          { id: "2", text: "describes quantities ", order: 2 },
+          { id: "3", text: "with magnitude only.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "VECTOR ", order: 1 },
+          { id: "2", text: "describes quantities ", order: 2 },
+          { id: "3", text: "with magnitude and direction.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "KINEMATICS ", order: 1 },
+          { id: "2", text: "describes motion ", order: 2 },
+          { id: "3", text: "without considering forces.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "VELOCITY ", order: 1 },
+          { id: "2", text: "is the rate of change ", order: 2 },
+          { id: "3", text: "of displacement.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "ACCELERATION ", order: 1 },
+          { id: "2", text: "is the rate of change ", order: 2 },
+          { id: "3", text: "of velocity.", order: 3 },
+        ],
+      ]
+    },
+    'phys1-unit2': {
+      // Add your questions here
+      snake: [
+        {question: 'the force that opposes motion between two surfaces in contact.', answer: 'FRICTION'},
+        {question: 'force due to gravity acting on an object.', answer: 'WEIGHT'},
+        {question: 'the tendency of an object to resist changes in its state of motion.', answer: 'INERTIA'},
+        {question: 'the force that pulls objects toward the center of the Earth.', answer: 'GRAVITY'},
+      ],
+      wordsearch: [
+        {word: "FRICTION"},
+        {word: "WEIGHT"},
+        {word: "INERTIA"},
+        {word: "GRAVITY"},
+      ],
+      dragdrop: {
+        categories: ["Forces", "Motion Concepts"],
+        items: [
+          { category: "Forces", text: "FRICTION" },
+          { category: "Forces", text: "WEIGHT" },
+          { category: "Motion Concepts", text: "INERTIA" },
+          { category: "Motion Concepts", text: "GRAVITY" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the force that opposes motion between two surfaces in contact.", answer: "FRICTION" },
+        { sentence: "___ is the force due to gravity acting on an object.", answer: "WEIGHT" },
+        { sentence: "___ is the tendency of an object to resist changes in its state of motion.", answer: "INERTIA" },
+        { sentence: "___ is the force that pulls objects toward the center of the Earth.", answer: "GRAVITY" },
+        { sentence: '___ is a friction that prevents motion between two surfaces.', answer: 'STATIC FRICTION' },
+        { sentence: '___ is a friction that opposes motion when two surfaces are sliding past each other.', answer: 'KINETIC FRICTION' },
+      ],
+      memoryflip: [
+        { question: "FRICTION", answer: "the force that opposes motion between two surfaces in contact." },
+        { question: "WEIGHT", answer: "the force due to gravity acting on an object." },
+        { question: "INERTIA", answer: "the tendency of an object to resist changes in its state of motion." },
+        { question: "GRAVITY", answer: "the force that pulls objects toward the center of the Earth." },
+        { question: "STATIC FRICTION", answer: "a friction that prevents motion between two surfaces." },
+        { question: "KINETIC FRICTION", answer: "a friction that opposes motion when two surfaces are sliding past each other." },
+      ],
+      fighttime: [
+        { question: "What is the force that opposes motion between two surfaces in contact?", answers: ["FRICTION"] },
+        { question: "What is the force due to gravity acting on an object?", answers: ["WEIGHT"] },
+        { question: "What is the tendency of an object to resist changes in its state of motion?", answers: ["INERTIA"] },
+        { question: "What is the force that pulls objects toward the center of the Earth?", answers: ["GRAVITY"] },
+        { question: "What friction prevents motion between two surfaces?", answers: ["STATIC FRICTION"] },
+        { question: "What friction opposes motion when two surfaces are sliding past each other?", answers: ["KINETIC FRICTION"] },
+      ],
+      matchit: [
+        { question: "FRICTION", answer: "the force that opposes motion between two surfaces in contact." },
+        { question: "WEIGHT", answer: "the force due to gravity acting on an object." },
+        { question: "INERTIA", answer: "the tendency of an object to resist changes in its state of motion." },
+        { question: "GRAVITY", answer: "the force that pulls objects toward the center of the Earth." },
+        { question: "STATIC FRICTION", answer: "a friction that prevents motion between two surfaces." },
+        { question: "KINETIC FRICTION", answer: "a friction that opposes motion when two surfaces are sliding past each other." },  
+      ],
+      guessword: [
+        {question: 'the force that opposes motion between two surfaces in contact.', answer: 'FRICTION'},
+        {question: 'force due to gravity acting on an object.', answer: 'WEIGHT'},
+        {question: 'the tendency of an object to resist changes in its state of motion.', answer: 'INERTIA'},
+        {question: 'the force that pulls objects toward the center of the Earth.', answer: 'GRAVITY'},
+        {question: 'a friction that prevents motion between two surfaces.', answer: 'STATIC FRICTION'},
+        {question: 'a friction that opposes motion when two surfaces are sliding past each other.', answer: 'KINETIC FRICTION'},
+      ],
+      conceptpuzzle: [
+        { question: 'the force that opposes motion between two surfaces in contact.', answer: 'FRICTION', hints: ['Opposes', 'Motion'] },
+        { question: 'force due to gravity acting on an object.', answer: 'WEIGHT', hints: ['Gravity', 'Force'] },
+        { question: 'the tendency of an object to resist changes in its state of motion.', answer: 'INERTIA', hints: ['Resist', 'Motion'] },
+        { question: 'the force that pulls objects toward the center of the Earth.', answer: 'GRAVITY', hints: ['Pulls', 'Earth'] },
+        { question: 'a friction that prevents motion between two surfaces.', answer: 'STATIC FRICTION', hints: ['Prevents', 'Motion'] },
+        { question: 'a friction that opposes motion when two surfaces are sliding past each other.', answer: 'KINETIC FRICTION', hints: ['Opposes', 'Sliding'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "FRICTION ", order: 1 },
+          { id: "2", text: "is the force that opposes ", order: 2 },
+          { id: "3", text: "motion between two surfaces in contact.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "WEIGHT ", order: 1 },
+          { id: "2", text: "is the force due to gravity ", order: 2 },
+          { id: "3", text: "acting on an object.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "INERTIA ", order: 1 },
+          { id: "2", text: "is the tendency of an object ", order: 2 },
+          { id: "3", text: "to resist changes in its state of motion.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "GRAVITY ", order: 1 },
+          { id: "2", text: "is the force that pulls objects ", order: 2 },
+          { id: "3", text: "toward the center of the Earth.", order: 3 },
+        ],
+      ],
+    },
+    'phys1-unit3': {
+      // Add your questions here 
+      snake: [
+        {question: 'done when a force causes displacement.', answer: 'WORK'},
+        {question: 'rate of doing work.', answer: 'POWER'},
+        {question: 'energy possessed due to position or configuration.', answer: 'POTENTIAL ENERGY'},
+        {question: 'energy possessed due to motion.', answer: 'KINETIC ENERGY'},
+      ],
+      wordsearch: [
+        {word: "WORK"},
+        {word: "POWER"},
+        {word: "POTENTIAL"},
+        {word: "KINETIC"},
+        {word: "ENERGY"},
+      ],
+      dragdrop: {
+        categories: ["Energy Concepts", "Work and Power"],
+        items: [
+          { category: "Energy Concepts", text: "POTENTIAL ENERGY" },
+          { category: "Energy Concepts", text: "KINETIC ENERGY" },
+          { category: "Work and Power", text: "WORK" },
+          { category: "Work and Power", text: "POWER" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is done when a force causes displacement.", answer: "WORK" },
+        { sentence: "___ is the rate of doing work.", answer: "POWER" },
+        { sentence: "___ is energy possessed due to position or configuration.", answer: "POTENTIAL ENERGY" },
+        { sentence: "___ is energy possessed due to motion.", answer: "KINETIC ENERGY" },
+      ],
+      memoryflip: [
+        { question: "A force of 10 N pushes a box 5 m in the same direction as the force. How much work is done?", answer: "50J" },
+        { question: "A 2 kg ball moves at 4 m/s. What is its kinetic energy?", answer: "16J" },
+        { question: "A 3 kg object is lifted to a height of 2 m. What is its gravitational potential energy? (g = 9.8 m/", answer: "58.8 J" },
+        { question: "A machine does 100 J of work in 5 seconds. What is its power output?", answer: "20 W" },
+      ],
+      fighttime: [
+        { question: "A force of 10 N pushes a box 5 m in the same direction as the force. How much work is done?", answers: ["50J"] },
+        { question: "A 2 kg ball moves at 4 m/s. What is its kinetic energy?", answers: ["16J"] },
+        { question: "A 3 kg object is lifted to a height of 2 m. What is its gravitational potential energy? (g = 9.8 m/s²)", answers: ["58.8 J"] },
+        { question: "A machine does 100 J of work in 5 seconds. What is its power output?", answers: ["20 W"] },
+      ],
+      matchit: [
+        { question: "A force of 10 N pushes a box 5 m in the same direction as the force. How much work is done?", answer: "50J" },
+        { question: "A 2 kg ball moves at 4 m/s. What is its kinetic energy?", answer: "16J" },
+        { question: "A 3 kg object is lifted to a height of 2 m. What is its gravitational potential energy? (g = 9.8 m/s²)", answer: "58.8 J" },
+        { question: "A machine does 100 J of work in 5 seconds. What is its power output?", answer: "20 W" },
+      ],
+      guessword: [
+        {question: 'done when a force causes displacement.', answer: 'WORK'},
+        {question: 'rate of doing work.', answer: 'POWER'},
+        {question: 'energy possessed due to position or configuration.', answer: 'POTENTIAL ENERGY'},
+        {question: 'energy possessed due to motion.', answer: 'KINETIC ENERGY'},
+      ],
+      conceptpuzzle: [
+        { question: 'done when a force causes displacement.', answer: 'WORK', hints: ['Force', 'Displacement'] },
+        { question: 'rate of doing work.', answer: 'POWER', hints: ['Rate', 'Work'] },
+        { question: 'energy possessed due to position or configuration.', answer: 'POTENTIAL ENERGY', hints: ['Position', 'Energy'] },
+        { question: 'energy possessed due to motion.', answer: 'KINETIC ENERGY', hints: ['Motion', 'Energy'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "WORK ", order: 1 },
+          { id: "2", text: "is done when a force ", order: 2 },
+          { id: "3", text: "causes displacement.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "POWER ", order: 1 },
+          { id: "2", text: "is the rate of ", order: 2 },
+          { id: "3", text: "doing work.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "POTENTIAL ENERGY ", order: 1 },
+          { id: "2", text: "is energy possessed ", order: 2 },
+          { id: "3", text: "due to position or configuration.", order: 3 },
+        ],
+        // Puzzle 4 
+        [
+          { id: "1", text: "KINETIC ENERGY ", order: 1 },
+          { id: "2", text: "is energy possessed ", order: 2 },
+          { id: "3", text: "due to motion.", order: 3 },
+        ],
+      ],
+    },
+    'phys1-unit4': {
+      // Add your questions here
+      snake:[
+        {question: 'Is the quantity of motion.', answer: 'MOMENTUM'},
+        {question: 'Is the rate of change of momentum.', answer: 'FORCE'},
+        {question: 'Is the product of force and the time over which it acts.', answer: 'IMPULSE'},
+      ],
+      wordsearch: [
+        {word: "MOMENTUM"},
+        {word: "FORCE"},
+        {word: "IMPULSE"},
+        {word: 'ELASTIC'},
+        {word: 'INELASTIC'},
+        {word: 'COLLISION'},
+      ],
+      dragdrop: {
+        categories: ["Momentum Concepts", "Collision Types"],
+        items: [
+          { category: "Momentum Concepts", text: "MOMENTUM" },
+          { category: "Momentum Concepts", text: "FORCE" },
+          { category: "Momentum Concepts", text: "IMPULSE" },
+          { category: "Collision Types", text: "ELASTIC" },
+          { category: "Collision Types", text: "INELASTIC" },
+          { category: "Collision Types", text: "COLLISION" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the quantity of motion.", answer: "MOMENTUM" },
+        { sentence: "___ is the rate of change of momentum.", answer: "FORCE" },
+        { sentence: "___ is the product of force and the time over which it acts.", answer: "IMPULSE" },
+        { sentence: "An ___ collision is one in which kinetic energy is conserved.", answer: "ELASTIC" },
+        { sentence: "An ___ collision is one in which kinetic energy is not conserved.", answer: "INELASTIC" },
+        { sentence: "A ___ is an event where two or more bodies exert forces on each other.", answer: "COLLISION" },
+      ],
+      memoryflip: [
+        { question: 'A 2 kg cart moving at 4 m/s collides elastically with a 2 kg cart at rest. What is the final velocity of the first cart?', answer: '0 m/s' },
+        { question: 'A 1 kg ball moving at 6 m/s hits a 2 kg ball at rest and they stick together. What is their final velocity?', answer: '2 m/s' },
+        { question: 'A 3 kg object moving at 5 m/s collides elastically with a 2 kg object moving at 3 m/s. What is the final velocity of the 3 kg object?', answer: '3.8 m/s' },
+        { question: 'A 4 kg cart moving at 2 m/s collides inelastically with a 6 kg cart at rest. What is their final velocity?', answer: '0.8 m/s' },
+        { question: 'A 5 kg object moving at 10 m/s collides elastically with a 5 kg object moving at -5 m/s. What is the final velocity of the first object?', answer: ' -5 m/s' },
+      ],
+      fighttime: [
+        { question: 'A 2 kg cart moving at 4 m/s collides elastically with a 2 kg cart at rest. What is the final velocity of the first cart?', answers: ['0 m/s'] },
+        { question: 'A 1 kg ball moving at 6 m/s hits a 2 kg ball at rest and they stick together. What is their final velocity?', answers: ['2 m/s'] },
+        { question: 'A 3 kg object moving at 5 m/s collides elastically with a 2 kg object moving at 3 m/s. What is the final velocity of the 3 kg object?', answers: ['3.8 m/s'] },
+        { question: 'A 4 kg cart moving at 2 m/s collides inelastically with a 6 kg cart at rest. What is their final velocity?', answers: ['0.8 m/s'] },
+        { question: 'A 5 kg object moving at 10 m/s collides elastically with a 5 kg object moving at -5 m/s. What is the final velocity of the first object?', answers: ['-5 m/s'] },
+      ],
+      matchit: [
+        { question: 'A 2 kg cart moving at 4 m/s collides elastically with a 2 kg cart at rest. What is the final velocity of the first cart?', answer: '0 m/s' },
+        { question: 'A 1 kg ball moving at 6 m/s hits a 2 kg ball at rest and they stick together. What is their final velocity?', answer: '2 m/s' },
+        { question: 'A 3 kg object moving at 5 m/s collides elastically with a 2 kg object moving at 3 m/s. What is the final velocity of the 3 kg object?', answer: '3.8 m/s' },
+        { question: 'A 4 kg cart moving at 2 m/s collides inelastically with a 6 kg cart at rest. What is their final velocity?', answer: '0.8 m/s' },
+        { question: 'A 5 kg object moving at 10 m/s collides elastically with a 5 kg object moving at -5 m/s. What is the final velocity of the first object?', answer: '-5 m/s' },
+      ],
+      guessword: [
+        {question: 'the quantity of motion.', answer: 'MOMENTUM'},
+        {question: 'the rate of change of momentum.', answer: 'FORCE'},
+        {question: 'the product of force and the time over which it acts.', answer: 'IMPULSE'},
+        {question: 'a collision in which kinetic energy is conserved.', answer: 'ELASTIC'},
+        {question: 'a collision in which kinetic energy is not conserved.', answer: 'INELASTIC'},
+        {question: 'an event where two or more bodies exert forces on each other.', answer: 'COLLISION'},
+      ],
+      conceptpuzzle: [
+        { question: 'the quantity of motion.', answer: 'MOMENTUM', hints: ['Quantity', 'Motion'] },
+        { question: 'the rate of change of momentum.', answer: 'FORCE', hints: ['Rate', 'Change'] },
+        { question: 'the product of force and the time over which it acts.', answer: 'IMPULSE', hints: ['Force', 'Time'] },
+        { question: 'a collision in which kinetic energy is conserved.', answer: 'ELASTIC', hints: ['Kinetic', 'Conserved'] },
+        { question: 'a collision in which kinetic energy is not conserved.', answer: 'INELASTIC', hints: ['Kinetic', 'Not conserved'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "MOMENTUM ", order: 1 },
+          { id: "2", text: "is the quantity ", order: 2 },
+          { id: "3", text: "of motion.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "FORCE ", order: 1 },
+          { id: "2", text: "is the rate of change ", order: 2 },
+          { id: "3", text: "of momentum.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "IMPULSE ", order: 1 },
+          { id: "2", text: "is the product of force ", order: 2 },
+          { id: "3", text: "and the time over which it acts.", order: 3 },
+        ],
+      ],
+    },
+    'phys1-unit5': {
+      // Add your questions here
+      snake: [
+        {question: 'This type of motion has analogous quantities to linear motion.', answer: 'ROTATIONAL'},
+        {question: 'The angular position is masured in these units.', answer: 'RADIANS'},
+        {question: 'Is the rotational equivalent force.', answer: 'TORQUE'},
+        {question: 'the natural tendency of objects in motion to stay in motion and objects at rest to stay at rest, unless a force causes its velocity to change.', answer: 'INERTIA'},
+      ],
+      wordsearch: [
+        {word: "ROTATIONAL"},
+        {word: "RADIANS"},
+        {word: "TORQUE"},
+        {word: "INERTIA"},
+      ],
+      dragdrop: {
+        categories: ["Rotational Concepts", "Motion Concepts"],
+        items: [
+          { category: "Rotational Concepts", text: "ROTATIONAL" },
+          { category: "Rotational Concepts", text: "RADIANS" },
+          { category: "Rotational Concepts", text: "TORQUE" },
+          { category: "Motion Concepts", text: "INERTIA" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ motion has analogous quantities to linear motion.", answer: "ROTATIONAL" },
+        { sentence: "The angular position is measured in ___ units.", answer: "RADIANS" },
+        { sentence: "___ is the rotational equivalent force.", answer: "TORQUE" },
+        { sentence: "___ is the natural tendency of objects in motion to stay in motion and objects at rest to stay at rest, unless a force causes its velocity to change.", answer: "INERTIA" },
+      ],
+      memoryflip: [
+        { question: "A wheel rotates through an angle of 2π radians in 4 seconds. What is its angular velocity?", answer: "π/2 rad/s" },
+        { question: "A force of 10 N is applied at a distance of 0.5 m from the axis of rotation. What is the torque produced?", answer: "5 Nm" },
+        { question: "A solid sphere with a mass of 2 kg and a radius of 0.3 m rolls down an incline without slipping. What is its moment of inertia?", answer: "0.09 kg·m²" },
+        { question: "A disk with a moment of inertia of 0.5 kg·m² is rotating at an angular velocity of 4 rad/s. What is its rotational kinetic energy?", answer: "4 J" },
+      ],
+      fighttime: [
+        { question: "A wheel rotates through an angle of 2π radians in 4 seconds. What is its angular velocity?", answers: ["π/2 rad/s"] },
+        { question: "A force of 10 N is applied at a distance of 0.5 m from the axis of rotation. What is the torque produced?", answers: ["5 Nm"] },
+        { question: "A solid sphere with a mass of 2 kg and a radius of 0.3 m rolls down an incline without slipping. What is its moment of inertia?", answers: ["0.09 kg·m²"] },
+        { question: "A disk with a moment of inertia of 0.5 kg·m² is rotating at an angular velocity of 4 rad/s. What is its rotational kinetic energy?", answers: ["4 J"] },
+      ],
+      matchit: [
+        { question: "A wheel rotates through an angle of 2π radians in 4 seconds. What is its angular velocity?", answer: "π/2 rad/s" },
+        { question: "A force of 10 N is applied at a distance of 0.5 m from the axis of rotation. What is the torque produced?", answer: "5 Nm" },
+        { question: "A solid sphere with a mass of 2 kg and a radius of 0.3 m rolls down an incline without slipping. What is its moment of inertia?", answer: "0.09 kg·m²" },
+        { question: "A disk with a moment of inertia of 0.5 kg·m² is rotating at an angular velocity of 4 rad/s. What is its rotational kinetic energy?", answer: "4 J" },
+      ],
+      guessword: [
+        {question: 'This type of motion has analogous quantities to linear motion.', answer: 'ROTATIONAL'},
+        {question: 'The angular position is masured in these units.', answer: 'RADIANS'},
+        {question: 'Is the rotational equivalent force.', answer: 'TORQUE'},
+        {question: 'the natural tendency of objects in motion to stay in motion and objects at rest to stay at rest, unless a force causes its velocity to change.', answer: 'INERTIA'},
+      ],
+      conceptpuzzle: [
+        { question: 'This type of motion has analogous quantities to linear motion.', answer: 'ROTATIONAL', hints: ['Analogous', 'Linear'] },
+        { question: 'The angular position is masured in these units.', answer: 'RADIANS', hints: ['Angular', 'Units'] },
+        { question: 'Is the rotational equivalent force.', answer: 'TORQUE', hints: ['Rotational', 'Force'] },
+        { question: 'the natural tendency of objects in motion to stay in motion and objects at rest to stay at rest, unless a force causes its velocity to change.', answer: 'INERTIA', hints: ['Tendency', 'Motion'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "ROTATIONAL ", order: 1 },
+          { id: "2", text: "motion has analogous ", order: 2 },
+          { id: "3", text: "quantities to linear motion.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "RADIANS ", order: 1 },
+          { id: "2", text: "are the units ", order: 2 },
+          { id: "3", text: "for angular position.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "TORQUE ", order: 1 },
+          { id: "2", text: "is the rotational equivalent ", order: 2 },
+          { id: "3", text: "of force.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "INERTIA ", order: 1 },
+          { id: "2", text: "is the natural tendency ", order: 2 },
+          { id: "3", text: "to resist changes in motion.", order: 3 },
+        ],
+      ],
+    },
+    'phys1-unit6': {
+      // Add your questions here
+      snake: [
+        {question: 'The force of attraction between any two objects with mass.', answer: 'GRAVITY'},
+        {question: 'The distance from the center of the Earth to an object.', answer: 'RADIUS'},
+        {question: 'The force of gravity acting on an object (Weight = mass x gravitational acceleration).', answer: 'WEIGHT'},
+        {question: 'The amount of matter in an object; it determines the strength of gravitational attraction.', answer: 'MASS'},
+      ],
+      wordsearch: [
+        {word: "GRAVITY"},
+        {word: "RADIUS"},
+        {word: "WEIGHT"},
+        {word: "MASS"},
+      ],
+      dragdrop: {
+        categories: ["Gravitational Concepts", "Mass and Weight"],
+        items: [
+          { category: "Gravitational Concepts", text: "GRAVITY" },
+          { category: "Gravitational Concepts", text: "RADIUS" },
+          { category: "Mass and Weight", text: "WEIGHT" },
+          { category: "Mass and Weight", text: "MASS" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the force of attraction between any two objects with mass.", answer: "GRAVITY" },
+        { sentence: "___ is the distance from the center of the Earth to an object.", answer: "RADIUS" },
+        { sentence: "___ is the force of gravity acting on an object (Weight = mass x gravitational acceleration).", answer: "WEIGHT" },
+        { sentence: "___ is the amount of matter in an object; it determines the strength of gravitational attraction.", answer: "MASS" },
+      ],
+      memoryflip: [
+        { question: "What is the gravitational force between two 5 kg masses separated by a distance of 2 m? (G = 6.674x10^-11 N·m²/kg²)", answer: "8.34x10^-11 N" },
+        { question: "What is the weight of a 70 kg object on the surface of the Earth? (g = 9.8 m/s²)", answer: "686 N" },
+        { question: "What is the radius of the Earth?", answer: "6.371x10^6 m" },
+        { question: "What is the mass of an object that weighs 500 N on the surface of the Earth? (g = 9.8 m/s²)", answer: "51.02 kg" },
+      ],
+      fighttime: [
+        { question: "What is the gravitational force between two 5 kg masses separated by a distance of 2 m? (G = 6.674x10^-11 N·m²/kg²)", answers: ["8.34x10^-11 N"] },
+        { question: "What is the weight of a 70 kg object on the surface of the Earth? (g = 9.8 m/s²)", answers: ["686 N"] },
+        { question: "What is the radius of the Earth?", answers: ["6.371x10^6 m"] },
+        { question: "What is the mass of an object that weighs 500 N on the surface of the Earth? (g = 9.8 m/s²)", answers: ["51.02 kg"] },
+      ],
+      matchit: [
+        { question: "What is the gravitational force between two 5 kg masses separated by a distance of 2 m? (G = 6.674x10^-11 N·m²/kg²)", answer: "8.34x10^-11 N" },
+        { question: "What is the weight of a 70 kg object on the surface of the Earth? (g = 9.8 m/s²)", answer: "686 N" },
+        { question: "What is the radius of the Earth?", answer: "6.371x10^6 m" },
+        { question: "What is the mass of an object that weighs 500 N on the surface of the Earth? (g = 9.8 m/s²)", answer: "51.02 kg" },
+      ],
+      guessword: [
+        {question: 'The force of attraction between any two objects with mass.', answer: 'GRAVITY'},
+        {question: 'The distance from the center of the Earth to an object.', answer: 'RADIUS'},
+        {question: 'The force of gravity acting on an object (Weight = mass x gravitational acceleration).', answer: 'WEIGHT'},
+        {question: 'The amount of matter in an object; it determines the strength of gravitational attraction.', answer: 'MASS'},
+      ],
+      conceptpuzzle: [
+        { question: 'The force of attraction between any two objects with mass.', answer: 'GRAVITY', hints: ['Attraction', 'Mass'] },
+        { question: 'The distance from the center of the Earth to an object.', answer: 'RADIUS', hints: ['Distance', 'Center'] },
+        { question: 'The force of gravity acting on an object (Weight = mass x gravitational acceleration).', answer: 'WEIGHT', hints: ['Gravity', 'Force'] },
+        { question: 'The amount of matter in an object; it determines the strength of gravitational attraction.', answer: 'MASS', hints: ['Matter', 'Attraction'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "GRAVITY ", order: 1 },
+          { id: "2", text: "is the force of attraction ", order: 2 },
+          { id: "3", text: "between any two objects with mass.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "RADIUS ", order: 1 },
+          { id: "2", text: "is the distance from ", order: 2 },
+          { id: "3", text: "the center of the Earth to an object.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "WEIGHT ", order: 1 },
+          { id: "2", text: "is the force of gravity ", order: 2 },
+          { id: "3", text: "acting on an object.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "MASS ", order: 1 },
+          { id: "2", text: "is the amount of matter ", order: 2 },
+          { id: "3", text: "in an object.", order: 3 },
+        ],
+      ],
+      },
+    'phys1-unit7': {
+      // Add your questions here
+      snake: [
+        {question: 'Time for one complete cycle (seconds)', answer: 'PERIOD'},
+        {question: 'Number of cycles per second (Hertz)', answer: 'FREQUENCY'},
+        {question: 'is a longitudinal mechanical wave.', answer: 'SOUND'},
+        {question: 'The ___ effect is the change in observed frequency due to relative motion.', answer: 'DOPPLER'},
+      ],
+      wordsearch: [
+        {word: "PERIOD"},
+        {word: "FREQUENCY"},
+        {word: "SOUND"},
+        {word: "DOPPLER"},
+      ],
+      dragdrop: {
+        categories: ["Wave Concepts", "Sound Concepts"],
+        items: [
+          { category: "Wave Concepts", text: "PERIOD" },
+          { category: "Wave Concepts", text: "FREQUENCY" },
+          { category: "Sound Concepts", text: "SOUND" },
+          { category: "Sound Concepts", text: "DOPPLER EFFECT" },
+      ]
+      },
+      fillblanks: [
+        { sentence: "___ is the time for one complete cycle (seconds).", answer: "PERIOD" },
+        { sentence: "___ is the number of cycles per second (Hertz).", answer: "FREQUENCY" },
+        { sentence: "___ is a longitudinal mechanical wave.", answer: "SOUND" },
+        { sentence: "The ___ effect is the change in observed frequency due to relative motion.", answer: "DOPPLER" },
+      ],
+      memoryflip: [
+      {question: "What is the period of a wave with a frequency of 5 Hz?", answer: "0.2 seconds" },
+      {question: "What is the frequency of a wave with a period of 0.1 seconds?", answer: "10 Hz" },
+      {question: "A sound wave travels at 340 m/s and has a frequency of 170 Hz. What is its wavelength?", answer: "2 meters" },
+      {question: "A wave completes 20 cycles in 4 seconds. What is its frequency?", answer: "5 Hz" },
+      {question: "A wave has a frequency of 5 Hz and a wavelength of 2 m. What is its speed?", answer: "10 m/s" },
+      ],
+      fighttime: [
+      {question: "What is the period of a wave with a frequency of 5 Hz?", answers: ["0.2 seconds"] },
+      {question: "What is the frequency of a wave with a period of 0.1 seconds?", answers: ["10 Hz"] },
+      {question: "A sound wave travels at 340 m/s and has a frequency of 170 Hz. What is its wavelength?", answers: ["2 meters"] },
+      {question: "A wave completes 20 cycles in 4 seconds. What is its frequency?", answers: ["5 Hz"] },
+      {question: "A wave has a frequency of 5 Hz and a wavelength of 2 m. What is its speed?", answers: ["10 m/s"] },
+      ],
+      matchit: [
+      {question: "What is the period of a wave with a frequency of 5 Hz?", answer: "0.2 seconds" },
+      {question: "What is the frequency of a wave with a period of 0.1 seconds?", answer: "10 Hz" },
+      {question: "A sound wave travels at 340 m/s and has a frequency of 170 Hz. What is its wavelength?", answer: "2 meters" },
+      {question: "A wave completes 20 cycles in 4 seconds. What is its frequency?", answer: "5 Hz" },
+      {question: "A wave has a frequency of 5 Hz and a wavelength of 2 m. What is its speed?", answer: "10 m/s" },
+      ],
+      guessword: [
+        {question: 'Time for one complete cycle (seconds)', answer: 'PERIOD'},
+        {question: 'Number of cycles per second (Hertz)', answer: 'FREQUENCY'},
+        {question: 'is a longitudinal mechanical wave.', answer: 'SOUND'},
+        {question: 'The ___ effect is the change in observed frequency due to relative motion.', answer: 'DOPPLER'},
+      ],
+      conceptpuzzle: [
+        { question: 'Time for one complete cycle (seconds).', answer: 'PERIOD', hints: ['Time', 'Cycle'] },
+        { question: 'Number of cycles per second (Hertz).', answer: 'FREQUENCY', hints: ['Cycles', 'Second'] },
+        { question: 'is a longitudinal mechanical wave.', answer: 'SOUND', hints: ['Longitudinal', 'Wave'] },
+        { question: 'The ___ effect is the change in observed frequency due to relative motion.', answer: 'DOPPLER', hints: ['Frequency', 'Motion'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "PERIOD ", order: 1 },
+          { id: "2", text: "is the time for ", order: 2 },
+          { id: "3", text: "one complete cycle (seconds).", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "FREQUENCY ", order: 1 },
+          { id: "2", text: "is the number of ", order: 2 },
+          { id: "3", text: "cycles per second (Hertz).", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "SOUND ", order: 1 },
+          { id: "2", text: "is a longitudinal ", order: 2 },
+          { id: "3", text: "mechanical wave.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "DOPPLER ", order: 1 },
+          { id: "2", text: "effect is the change ", order: 2 },
+          { id: "3", text: "in observed frequency due to relative motion.", order: 3 },
+        ],
+      ],
+    },
+    'phys1-unit8': {
+      // Add your questions here
+      snake:[
+        {question: 'mass per unit volume.', answer: 'DENSITY'},
+        {question: 'force per unit area.', answer: 'PRESSURE'},
+        {question: 'upward force exerted by a fluid on a submerged object.', answer: 'BUOYANCY'},
+        {question: 'Discovered the principle of buoyancy while in a bath ("Eureka!")', answer: 'ARCHIMEDES'},
+      ],
+      wordsearch: [
+        {word: "DENSITY"},
+        {word: "PRESSURE"},
+        {word: "BUOYANCY"},
+        {word: "ARCHIMEDES"},
+      ],
+      dragdrop: {
+        categories: ["Fluid Concepts", "Pascal's Principles", "Archimedes' Principles"],
+        items: [
+          { category: "Fluid Concepts", text: "DENSITY" },
+          { category: "Fluid Concepts", text: "PRESSURE" },
+          { category: "Archimedes' Principles", text: "BUOYANCY" },
+          { category: "Pascal's Principles", text: "Hydraulic lifts" },
+          { category: "Pascal's Principles", text: "F₁/A₁ = F₂/A₂" },
+          { category: "Archimedes' Principles", text: "Object Sinks and Floats" },
+          { category: "Archimedes' Principles", text: "F_B = x_fluid x V_displacedx g" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is mass per unit volume.", answer: "DENSITY" },
+        { sentence: "___ is force per unit area.", answer: "PRESSURE" },
+        { sentence: "___ is the upward force exerted by a fluid on a submerged object.", answer: "BUOYANCY" },
+        { sentence: "___ discovered the principle of buoyancy while in a bath (\"Eureka!\")", answer: "ARCHIMEDES" },
+      ],
+      memoryflip: [
+        { question: "A 5 kg object is fully submerged in water. What is the buoyant force? (Density of water = 1000 kg/m³, g = 9.8 m/s²)", answer: "49N" },
+        { question: "A wooden block floats on water, displacing 0.02 m³ of water. What is the buoyant force? (p = 1000 kg/m³, g = 9.8 m/s²)", answer: "196N" },
+        { question: "A cube of side 0.1 m is fully submerged in water. Find the buoyant force.", answer: "9.8N" },
+        { question: "A hydraulic lift has a small piston of 0.01 m² and a large piston of 1 m². If a force of 100 N is applied on the small piston, what is the force on the large piston?", answer: "10,000N" },
+        { question: 'A force of 50 N is applied to a piston of area 0.05 m² in a hydraulic system. If the larger piston has an area of 0.5 m², what is the force it exerts?', answer: '500 N' },
+      ],
+      fighttime: [
+        { question: "A 5 kg object is fully submerged in water. What is the buoyant force? (Density of water = 1000 kg/m³, g = 9.8 m/s²)", answers: ["49N"] },
+        { question: "A wooden block floats on water, displacing 0.02 m³ of water. What is the buoyant force? (p = 1000 kg/m³, g = 9.8 m/s²)", answers: ["196N"] },
+        { question: "A cube of side 0.1 m is fully submerged in water. Find the buoyant force.", answers: ["9.8N"] },
+        { question: "A hydraulic lift has a small piston of 0.01 m² and a large piston of 1 m². If a force of 100 N is applied on the small piston, what is the force on the large piston?", answers: ["10,000N"] },
+        { question: 'A force of 50 N is applied to a piston of area 0.05 m² in a hydraulic system. If the larger piston has an area of 0.5 m², what is the force it exerts?', answers: ['500 N'] },
+      ],
+      matchit: [
+        { question: "A 5 kg object is fully submerged in water. What is the buoyant force? (Density of water = 1000 kg/m³, g = 9.8 m/s²)", answer: "49N" },
+        { question: "A wooden block floats on water, displacing 0.02 m³ of water. What is the buoyant force? (p = 1000 kg/m³, g = 9.8 m/s²)", answer: "196N" },
+        { question: "A cube of side 0.1 m is fully submerged in water. Find the buoyant force.", answer: "9.8N" },
+        { question: "A hydraulic lift has a small piston of 0.01 m² and a large piston of 1 m². If a force of 100 N is applied on the small piston, what is the force on the large piston?", answer: "10,000N" },
+        { question: 'A force of 50 N is applied to a piston of area 0.05 m² in a hydraulic system. If the larger piston has an area of 0.5 m², what is the force it exerts?', answer: '500 N' },
+      ],
+      guessword: [
+        {question: 'mass per unit volume.', answer: 'DENSITY'},
+        {question: 'force per unit area.', answer: 'PRESSURE'},
+        {question: 'upward force exerted by a fluid on a submerged object.', answer: 'BUOYANCY'},
+        {question: 'Discovered the principle of buoyancy while in a bath ("Eureka!")', answer: 'ARCHIMEDES'},
+      ],  
+      conceptpuzzle: [
+        { question: 'mass per unit volume.', answer: 'DENSITY', hints: ['Mass', 'Volume'] },
+        { question: 'force per unit area.', answer: 'PRESSURE', hints: ['Force', 'Area'] },
+        { question: 'upward force exerted by a fluid on a submerged object.', answer: 'BUOYANCY', hints: ['Upward', 'Fluid'] },
+        { question: 'Discovered the principle of buoyancy while in a bath ("Eureka!")', answer: 'ARCHIMEDES', hints: ['Buoyancy', 'Smart Person and his name starts with letter A.'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1 
+        [
+          { id: "1", text: "DENSITY ", order: 1 },
+          { id: "2", text: "is mass per ", order: 2 },
+          { id: "3", text: "unit volume.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "PRESSURE ", order: 1 },
+          { id: "2", text: "is force per ", order: 2 },
+          { id: "3", text: "unit area.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "BUOYANCY ", order: 1 },
+          { id: "2", text: "is the upward force ", order: 2 },
+          { id: "3", text: "exerted by a fluid on a submerged object.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "ARCHIMEDES ", order: 1 },
+          { id: "2", text: "discovered the principle ", order: 2 },
+          { id: "3", text: "of buoyancy while in a bath (\"Eureka!\").", order: 3 },
+        ],
+      ],
+      },
+    'phys1-unit9': {
+      // Add your questions here
+      snake: [ 
+        { question: "measures average kinetic energy of particles.", answer: "TEMPERATURE" },
+        { question: "transfer of thermal energy due to temperature difference.", answer: "HEAT" },
+        { question: "Constant temperature (ΔT = 0).", answer: "ISOTHERMAL" },
+        { question: "Constant pressure (ΔP = 0).", answer: "ISOBARIC" },
+        { question: "Constant volume", answer: "ISOMETRIC" },
+        { question: "process with no heat exchange (Q = 0).", answer: "ADIABATIC" }, 
+      ],
+      wordsearch: [
+        { word: "TEMPERATURE" },
+        { word: "HEAT" },
+        { word: "ISOTHERMAL" },
+        { word: "ISOBARIC" },
+        { word: "ISOMETRIC" },
+        { word: "ADIABATIC" },
+      ],
+      dragdrop: {
+        categories: ["Thermodynamic Concepts", "Processes"],
+        items: [
+          { category: "Thermodynamic Concepts", text: "TEMPERATURE" },
+          { category: "Thermodynamic Concepts", text: "HEAT" },
+          { category: "Processes", text: "ISOTHERMAL" },
+          { category: "Processes", text: "ISOBARIC" },
+          { category: "Processes", text: "ISOMETRIC" },
+          { category: "Processes", text: "ADIABATIC" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ measures average kinetic energy of particles.", answer: "TEMPERATURE" },
+        { sentence: "___ is transfer of thermal energy due to temperature difference.", answer: "HEAT" },
+        { sentence: "___ process occurs at constant temperature (ΔT = 0).", answer: "ISOTHERMAL" },
+        { sentence: "___ process occurs at constant pressure (ΔP = 0).", answer: "ISOBARIC" },
+        { sentence: "___ process occurs at constant volume.", answer: "ISOMETRIC" },
+        { sentence: "___ process occurs with no heat exchange (Q = 0).", answer: "ADIABATIC" },
+      ],
+      // Add other question types here
+      memoryflip: [
+        { question: 'A 2 kg metal block is heated from 20°C to 50°C. Specific heat = 400 J/kg·°C. Heat absorbed?', answer: '24000 J' },
+        { question: 'An ideal gas undergoes an isothermal expansion from volume 1 m³ to 3 m³ at temperature 300 K. Work done by the gas?', answer: '2478.9 J' },
+        { question: 'A gas is compressed adiabatically from volume 4 m³ to 2 m³. Initial pressure is 100 kPa. Final pressure?', answer: '252 kPa' },
+        { question: 'A gas undergoes an isobaric expansion from volume 2 m³ to 5 m³ at pressure 150 kPa. Work done by the gas?', answer: '450000 J' },
+        { question: '0.3 kg aluminum at 200°C is dropped in 0.7 kg water at 25°C. c_al = 900, c_water = 4200. Final temp (°C)?', answer: '54.17°C' },
+      ],
+      fighttime: [
+        { question: 'A 2 kg metal block is heated from 20°C to 50°C. Specific heat = 400 J/kg·°C. Heat absorbed?', answers: ['24000 J'] },
+        { question: 'An ideal gas undergoes an isothermal expansion from volume 1 m³ to 3 m³ at temperature 300 K. Work done by the gas?', answers: ['2478.9 J'] },
+        { question: 'A gas is compressed adiabatically from volume 4 m³ to 2 m³. Initial pressure is 100 kPa. Final pressure?', answers: ['252 kPa'] },
+        { question: 'A gas undergoes an isobaric expansion from volume 2 m³ to 5 m³ at pressure 150 kPa. Work done by the gas?', answers: ['450000 J'] },
+        { question: '0.3 kg aluminum at 200°C is dropped in 0.7 kg water at 25°C. c_al = 900, c_water = 4200. Final temp (°C)?', answers: ['54.17°C'] },
+      ],
+      matchit: [
+        { question: "A 2 kg metal block is heated from 20°C to 50°C. Specific heat = 400 J/kg·°C. Heat absorbed?", answer: "24000 J" },
+        { question: "An ideal gas undergoes an isothermal expansion from volume 1 m³ to 3 m³ at temperature 300 K. Work done by the gas?", answer: "2478.9 J" },
+        { question: "A gas is compressed adiabatically from volume 4 m³ to 2 m³. Initial pressure is 100 kPa. Final pressure?", answer: "252 kPa" },
+        { question: "A gas undergoes an isobaric expansion from volume 2 m³ to 5 m³ at pressure 150 kPa. Work done by the gas?", answer: "450000 J" },
+        { question: "0.3 kg aluminum at 200°C is dropped in 0.7 kg water at 25°C. c_al = 900, c_water = 4200. Final temp (°C)?", answer: "54.17°C" },
+      ],
+      guessword: [
+        {question: 'measures average kinetic energy of particles.', answer: 'TEMPERATURE'},
+        {question: 'transfer of thermal energy due to temperature difference.', answer: 'HEAT'},
+        {question: 'Constant temperature (ΔT = 0).', answer: 'ISOTHERMAL'},
+        {question: 'Constant pressure (ΔP = 0).', answer: 'ISOBARIC'},
+        {question: 'Constant volume', answer: 'ISOMETRIC'},
+        {question: 'process with no heat exchange (Q = 0).', answer: 'ADIABATIC'},
+      ],
+      conceptpuzzle: [
+        { question: 'measures average kinetic energy of particles.', answer: 'TEMPERATURE', hints: ['Kinetic Energy', 'Particles'] },
+        { question: 'transfer of thermal energy due to temperature difference.', answer: 'HEAT', hints: ['Thermal Energy', 'Temperature'] },
+        { question: 'Constant temperature (ΔT = 0).', answer: 'ISOTHERMAL', hints: ['Constant', 'Temperature'] },
+        { question: 'Constant pressure (ΔP = 0).', answer: 'ISOBARIC', hints: ['Constant', 'Pressure'] },
+        { question: 'Constant volume', answer: 'ISOMETRIC', hints: ['Constant', 'Volume'] },
+        { question: 'process with no heat exchange (Q = 0).', answer: 'ADIABATIC', hints: ['No Heat', 'Exchange'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "TEMPERATURE ", order: 1 },
+          { id: "2", text: "measures average ", order: 2 },
+          { id: "3", text: "kinetic energy of particles.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "HEAT ", order: 1 },
+          { id: "2", text: "is transfer of ", order: 2 },
+          { id: "3", text: "thermal energy due to temperature difference.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "ISOTHERMAL ", order: 1 },
+          { id: "2", text: "process occurs at ", order: 2 },
+          { id: "3", text: "constant temperature (ΔT = 0).", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "ISOBARIC ", order: 1 },
+          { id: "2", text: "process occurs at ", order: 2 },
+          { id: "3", text: "constant pressure (ΔP = 0).", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "ISOMETRIC ", order: 1 },
+          { id: "2", text: "process occurs at ", order: 2 },
+          { id: "3", text: "constant volume.", order: 3 },
+        ],
+        // Puzzle 6
+        [
+          { id: "1", text: "ADIABATIC ", order: 1 },
+          { id: "2", text: "process occurs with ", order: 2 },
+          { id: "3", text: "no heat exchange (Q = 0).", order: 3 },
+        ],
+      ],
+    },
+  }, 
+  'physics-2': {
+    'phys2-unit1': {
+      // Add your questions here
+      snake: [
+        {question: 'Determined the mathematical form of the electric force law (1785)', answer: 'COULOMB'},
+        {question: 'The fundamental unit of electric charge.', answer: 'COULOMB'},
+        {question: 'This charge is a fundamental property of matter.', answer: 'ELECTRIC'},
+        {question: 'Charges move freely', answer: 'CONDUCTORS'},
+        {question: 'Charges do not move freely', answer: 'INSULATORS'},
+        {question: 'Charge redistribution without contact', answer: 'INDUCTION'},
+      ],
+      wordsearch: [
+        {word: "COULOMB"},
+        {word: "ELECTRIC"},
+        {word: "CONDUCTORS"},
+        {word: "INSULATORS"},
+        {word: "INDUCTION"},
+      ],
+      dragdrop: {
+        categories: ["Methods of Charging", "Coulumb's Concepts"],
+        items: [
+          { category: "Methods of Charging", text: "FRICTION" },
+          { category: "Methods of Charging", text: "INDUCTION" },
+          { category: "Methods of Charging", text: "CONDUCTION" },
+          { category: "Coulumb's Concepts", text: "Force is along line joining charges" },
+          { category: "Coulumb's Concepts", text: "Attractive for opposite charges" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ determined the mathematical form of the electric force law (1785).", answer: "COULOMB" },
+        { sentence: "The fundamental unit of electric charge is the ___.", answer: "COULOMB" },
+        { sentence: "___ charge is a fundamental property of matter.", answer: "ELECTRIC" },
+        { sentence: "Charges move freely in ___.", answer: "CONDUCTORS" },
+        { sentence: "Charges do not move freely in ___.", answer: "INSULATORS" },
+        { sentence: "___ is charge redistribution without contact.", answer: "INDUCTION" },
+      ],
+      // Add other question types here
+      memoryflip: [
+        { question: 'Two charges, q₁ = 2 μC and q₂ = 3 μC, are 0.5 m apart. Find the force. (k = 9x10⁹ N·m²/C²)', answer: '216000 N' },
+        { question: 'Two charges, q₁ = 5 μC and q₂ = 5 μC, are 2 m apart. Force?', answer: '11250 N' },
+        { question: 'Two charges, q₁ = 1 μC and q₂ = 4 μC, are 0.1 m apart. Force?', answer: '3600 N' },
+        { question: 'Find the electric field E at a point 0.2 m from a charge q = 2 μC. (E = kq/r²)', answer: '450000 N/C' },
+        { question: 'A 1 μC charge experiences a force of 9 N. Find the electric field.', answer: '9x10⁶ N/C' },
+      ],
+      fighttime: [
+        { question: 'Two charges, q₁ = 2 μC and q₂ = 3 μC, are 0.5 m apart. Find the force. (k = 9x10⁹ N·m²/C²)', answers: ['216000 N'] },
+        { question: 'Two charges, q₁ = 5 μC and q₂ = 5 μC, are 2 m apart. Force?', answers: ['11250 N'] },
+        { question: 'Two charges, q₁ = 1 μC and q₂ = 4 μC, are 0.1 m apart. Force?', answers: ['3600 N'] },
+        { question: 'Find the electric field E at a point 0.2 m from a charge q = 2 μC. (E = kq/r²)', answers: ['450000 N/C'] },
+        { question: 'A 1 μC charge experiences a force of 9 N. Find the electric field.', answers: ['9x10⁶ N/C'] },
+        
+      ],
+      matchit: [
+        { question: 'Two charges, q₁ = 2 μC and q₂ = 3 μC, are 0.5 m apart. Find the force. (k = 9x10⁹ N·m²/C²)', answer: '216000 N' },
+        { question: 'Two charges, q₁ = 5 μC and q₂ = 5 μC, are 2 m apart. Force?', answer: '11250 N' },
+        { question: 'Two charges, q₁ = 1 μC and q₂ = 4 μC, are 0.1 m apart. Force?', answer: '3600 N' },
+        { question: 'Find the electric field E at a point 0.2 m from a charge q = 2 μC. (E = kq/r²)', answer: '450000 N/C' },
+        { question: 'A 1 μC charge experiences a force of 9 N. Find the electric field.', answer: '9x10⁶ N/C' },
+      ],
+      guessword: [
+        {question: 'Determined the mathematical form of the electric force law (1785)(surname only)', answer: 'COULOMB'},
+        {question: 'The fundamental unit of electric charge.', answer: 'COULOMB'},
+        {question: 'This charge is a fundamental property of matter.', answer: 'ELECTRIC'},
+        {question: 'Charges move freely', answer: 'CONDUCTORS'},
+        {question: 'Charges do not move freely', answer: 'INSULATORS'},
+        {question: 'Charge redistribution without contact', answer: 'INDUCTION'},
+      ],
+      conceptpuzzle: [
+        { question: 'Determined the mathematical form of the electric force law (1785).', answer: 'COULOMB', hints: ['Electric Force', '1785'] },
+        { question: 'The fundamental unit of electric charge.', answer: 'COULOMB', hints: ['Unit', 'Electric Charge'] },
+        { question: 'This charge is a fundamental property of matter.', answer: 'ELECTRIC', hints: ['Property', 'Matter'] },
+        { question: 'Charges move freely', answer: 'CONDUCTORS', hints: ['Charges', 'Free Movement'] },
+        { question: 'Charges do not move freely', answer: 'INSULATORS', hints: ['Charges', 'No Free Movement'] },
+        { question: 'Charge redistribution without contact', answer: 'INDUCTION', hints: ['Redistribution', 'No Contact'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "Charles Coulumb ", order: 1 },
+          { id: "2", text: "determined the mathematical ", order: 2 },
+          { id: "3", text: "form of the electric force law (1785).", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "COULOMB ", order: 1 },
+          { id: "2", text: "is the fundamental unit ", order: 2 },
+          { id: "3", text: "of electric charge.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "ELECTRIC ", order: 1 },
+          { id: "2", text: "charge is a fundamental ", order: 2 },
+          { id: "3", text: "property of matter.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "CONDUCTORS ", order: 1 },
+          { id: "2", text: "are materials where ", order: 2 },
+          { id: "3", text: "charges move freely.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "INSULATORS ", order: 1 },
+          { id: "2", text: "are materials where ", order: 2 },
+          { id: "3", text: "charges do not move freely.", order: 3 },
+        ],
+        // Puzzle 6
+        [
+          { id: "1", text: "INDUCTION ", order: 1 },
+          { id: "2", text: "is charge redistribution ", order: 2 },
+          { id: "3", text: "without contact.", order: 3 },
+        ],
+      ],
+    },
+    'phys2-unit2': {
+      // Add your questions here
+      snake:[
+        {question: 'The energy stored in a system of charges.', answer: 'POTENTIAL'},
+        {question: 'Positive for like charges', answer: 'REPULSION'},
+        {question: 'Negative for opposite charges', answer: 'ATTRACTION'},
+        {question: 'stores charge and electrical energy.', answer: 'CAPACITOR'},
+      ],
+      wordsearch: [
+        {word: "POTENTIAL"},
+        {word: "REPULSION"},
+        {word: "ATTRACTION"},
+        {word: "CAPACITOR"},
+      ],
+      dragdrop: {
+        categories: ["Electric Potential Concepts", "Capacitor Concepts"],
+        items: [
+          { category: "Electric Potential Concepts", text: "POTENTIAL" },
+          { category: "Electric Potential Concepts", text: "REPULSION" },
+          { category: "Electric Potential Concepts", text: "ATTRACTION" },
+          { category: "Capacitor Concepts", text: "CAPACITANCE" },
+          { category: "Capacitor Concepts", text: "FARAD" },
+          { category: 'Capacitor Concepts', text: 'DIELECTRIC' },
+      ]
+    },
+    fillblanks: [
+        { sentence: "___ is the energy stored in a system of charges.", answer: "POTENTIAL" },
+        { sentence: "___ is positive for like charges.", answer: "REPULSION" },
+        { sentence: "___ is negative for opposite charges.", answer: "ATTRACTION" },
+        { sentence: "A ___ stores charge and electrical energy.", answer: "CAPACITOR" },
+      ],
+      // Add other question types here
+      memoryflip: [
+        { question: 'A 1 μC charge moves through 12 V. Work done?', answer: '12 μJ' },
+        { question: 'A 4 μF capacitor has 6 V across it. Find Q.', answer: '24 μC' },
+        { question: 'A 5 μF capacitor is charged to 10 V. How much energy is stored? (U = ½ C V²)', answer: '0.00025 J' },
+        { question: 'A charge of 2 μC is at a point with electric potential 5 V. Find potential energy. (U = qV)', answer: '10 μJ' },
+        { question: 'A charge of 4 μC is at 10 V. Potential energy?', answer: '40 μJ' },
+      ],
+      fighttime: [
+        { question: 'A 1 μC charge moves through 12 V. Work done?', answers: ['12 μJ'] },
+        { question: 'A 4 μF capacitor has 6 V across it. Find Q.', answers: ['24 μC'] },
+        { question: 'A 5 μF capacitor is charged to 10 V. How much energy is stored? (U = ½ C V²)', answers: ['0.00025 J'] },
+        { question: 'A charge of 2 μC is at a point with electric potential 5 V. Find potential energy. (U = qV)', answers: ['10 μJ'] },
+        { question: 'A charge of 4 μC is at 10 V. Potential energy?', answers: ['40 μJ'] },
+      ],
+      matchit: [
+        { question: 'A 1 μC charge moves through 12 V. Work done?', answer: '12 μJ' },
+        { question: 'A 4 μF capacitor has 6 V across it. Find Q.', answer: '24 μC' },
+        { question: 'A 5 μF capacitor is charged to 10 V. How much energy is stored? (U = ½ C V²)', answer: '0.00025 J' },
+        { question: 'A charge of 2 μC is at a point with electric potential 5 V. Find potential energy. (U = qV)', answer: '10 μJ' },
+        { question: 'A charge of 4 μC is at 10 V. Potential energy?', answer: '40 μJ' },
+      ],
+      guessword: [
+        {question: 'The energy stored in a system of charges.', answer: 'POTENTIAL'},
+        {question: 'Positive for like charges', answer: 'REPULSION'},
+        {question: 'Negative for opposite charges', answer: 'ATTRACTION'},
+        {question: 'stores charge and electrical energy.', answer: 'CAPACITOR'},
+      ],
+      conceptpuzzle: [
+        { question: 'The energy stored in a system of charges.', answer: 'POTENTIAL', hints: ['Energy', 'Charges'] },
+        { question: 'Positive for like charges', answer: 'REPULSION', hints: ['Like Charges', 'Force'] },
+        { question: 'Negative for opposite charges', answer: 'ATTRACTION', hints: ['Opposite Charges', 'Force'] },
+        { question: 'stores charge and electrical energy.', answer: 'CAPACITOR', hints: ['Stores', 'Charge'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "POTENTIAL ", order: 1 },
+          { id: "2", text: "is the energy ", order: 2 },
+          { id: "3", text: "stored in a system of charges.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "REPULSION ", order: 1 },
+          { id: "2", text: "is positive for ", order: 2 },
+          { id: "3", text: "like charges.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "ATTRACTION ", order: 1 },
+          { id: "2", text: "is negative for ", order: 2 },
+          { id: "3", text: "opposite charges.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "CAPACITOR ", order: 1 },
+          { id: "2", text: "stores charge ", order: 2 },
+          { id: "3", text: "and electrical energy.", order: 3 },
+        ],
+      ],
+    },
+    'phys2-unit3': {
+      // Add your questions here
+      snake: [
+        {question: 'The rate of flow of electric charge.', answer: 'CURRENT'},
+        {question: 'Opposition to the flow of current.', answer: 'RESISTANCE'},
+        {question: 'Unit of resistance.', answer: 'OHM'},
+        {question: 'Components in a line.', answer: 'SERIES'},
+        {question: 'Components in separate branches.', answer: 'PARALLEL'},
+      ],
+      wordsearch: [
+        {word: "CURRENT"},
+        {word: "RESISTANCE"},
+        {word: "OHM"}, 
+        {word: "SERIES"},
+        {word: "PARALLEL"},
+      ],
+      dragdrop: {
+        categories: ["Electric Current Concepts", "Circuit Concepts"],
+        items: [
+          { category: "Electric Current Concepts", text: "CURRENT" },
+          { category: "Electric Current Concepts", text: "RESISTANCE" },
+          { category: "Electric Current Concepts", text: "OHM" },
+          { category: "Circuit Concepts", text: "COMBINATION" },
+          { category: "Circuit Concepts", text: "SERIES" },
+          { category: "Circuit Concepts", text: "PARALLEL" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the rate of flow of electric charge.", answer: "CURRENT" },
+        { sentence: "___ is the opposition to the flow of current.", answer: "RESISTANCE" },
+        { sentence: "The unit of resistance is ___.", answer: "OHM" },
+        { sentence: "Components in a line are in ___.", answer: "SERIES" },
+        { sentence: "Components in separate branches are in ___.", answer: "PARALLEL" },
+      ],
+      memoryflip: [
+        {question: 'A device has I = 2 A and V = 12 V. Find the power. (P = IV)', answer: '24 W'},
+        {question: 'A resistor of 6 Ω has a current of 3 A. Find the voltage across it. (V = IR)', answer: '18 V'},
+        {question: 'A 50 W lamp runs for 2 hours. How much energy is used? (E = Pt, t in seconds?)', answer: '360000 J'},
+        {question: 'Three resistors in series: R₁ = 2 Ω, R₂ = 3 Ω, R₃ = 5 Ω. Find total resistance.', answer: '10 Ω'},
+        {question: 'Three resistors in parallel: R₁ = 6 Ω, R₂ = 3 Ω, R₃ = 2 Ω. Find total resistance.', answer: '1 Ω'},
+      ],
+      fighttime: [
+        { question: 'A device has I = 2 A and V = 12 V. Find the power. (P = IV)', answers: ['24 W'] },
+        { question: 'A resistor of 6 Ω has a current of 3 A. Find the voltage across it. (V = IR)', answers: ['18 V'] },
+        { question: 'A 50 W lamp runs for 2 hours. How much energy is used? (E = Pt, t in seconds?)', answers: ['360000 J'] },
+        { question: 'Three resistors in series: R₁ = 2 Ω, R₂ = 3 Ω, R₃ = 5 Ω. Find total resistance.', answers: ['10 Ω'] },
+        { question: 'Three resistors in parallel: R₁ = 6 Ω, R₂ = 3 Ω, R₃ = 2 Ω. Find total resistance.', answers: ['1 Ω'] },
+      ],
+      matchit: [
+        {question: 'A device has I = 2 A and V = 12 V. Find the power. (P = IV)', answer: '24 W'},
+        {question: 'A resistor of 6 Ω has a current of 3 A. Find the voltage across it. (V = IR)', answer: '18 V'},
+        {question: 'A 50 W lamp runs for 2 hours. How much energy is used? (E = Pt, t in seconds?)', answer: '360000 J'},
+        {question: 'Three resistors in series: R₁ = 2 Ω, R₂ = 3 Ω, R₃ = 5 Ω. Find total resistance.', answer: '10 Ω'},
+        {question: 'Three resistors in parallel: R₁ = 6 Ω, R₂ = 3 Ω, R₃ = 2 Ω. Find total resistance.', answer: '1 Ω'},
+      ],
+      guessword: [
+        {question: 'The rate of flow of electric charge.', answer: 'CURRENT'},
+        {question: 'Opposition to the flow of current.', answer: 'RESISTANCE'},
+        {question: 'Unit of resistance.', answer: 'OHM'},
+        {question: 'Components in a line.', answer: 'SERIES'},
+        {question: 'Components in separate branches.', answer: 'PARALLEL'},
+      ],
+      conceptpuzzle: [
+        { question: 'The rate of flow of electric charge.', answer: 'CURRENT', hints: ['Flow', 'Charge'] },
+        { question: 'Opposition to the flow of current.', answer: 'RESISTANCE', hints: ['Opposition', 'Current'] },
+        { question: 'Unit of resistance.', answer: 'OHM', hints: ['Unit', 'Resistance'] },
+        { question: 'Components in a line.', answer: 'SERIES', hints: ['Components', 'Line'] },
+        { question: 'Components in separate branches.', answer: 'PARALLEL', hints: ['Components', 'Branches'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "CURRENT ", order: 1 },
+          { id: "2", text: "is the rate of ", order: 2 },
+          { id: "3", text: "flow of electric charge.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "RESISTANCE ", order: 1 },
+          { id: "2", text: "is the opposition to ", order: 2 },
+          { id: "3", text: "the flow of current.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "OHM ", order: 1 },
+          { id: "2", text: "is the unit of ", order: 2 },
+          { id: "3", text: "resistance.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "SERIES ", order: 1 },
+          { id: "2", text: "is when components are ", order: 2 },
+          { id: "3", text: "in a line.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "PARALLEL ", order: 1 },
+          { id: "2", text: "is when components are ", order: 2 },
+          { id: "3", text: "in separate branches.", order: 3 },
+        ],
+      ],
+
+    },
+    'phys2-unit4': { 
+      // Add your questions here
+      snake: [
+        {question: 'The study of magnetic fields and their effects.', answer: 'MAGNETISM'},
+        {question: 'A magnetic force provides ____ force', answer: 'CENTRIPETAL'},
+        {question: 'The region around a magnet where magnetic forces are exerted.', answer: 'MAGNETICFIELD'},
+        {question: 'Magnetic force on a moving charge is __ to both velocity and magnetic field.', answer: 'PERPENDICULAR'},
+      ],
+      wordsearch: [
+        {word: "MAGNETISM"},
+        {word: "CENTRIPETAL"},
+        {word: "MAGNET"},
+        {word: "CIRCULAR"},
+      ],
+      dragdrop: {
+        categories: ["Magnetism Concepts", "Magnetic Force Concepts"],
+        items: [
+          { category: "Magnetism Concepts", text: "MAGNETS" },
+          { category: "Magnetism Concepts", text: "MAGNETIC FIELD" },
+          { category: "Magnetic Force Concepts", text: "CENTRIPETAL" },
+          { category: "Magnetic Force Concepts", text: "PERPENDICULAR MOTION" },
+          { category: 'Magnetic Force Concepts', text: 'CIRCULAR MOTION' },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the study of magnetic fields and their effects.", answer: "MAGNETISM" },
+        { sentence: "A magnetic force provides ____ force.", answer: "CENTRIPETAL" },
+        { sentence: "The region around a magnet where magnetic forces are exerted is called the ___.", answer: "MAGNETICFIELD" },
+        { sentence: "Magnetic force on a moving charge is __ to both velocity and magnetic field.", answer: "PERPENDICULAR" },
+      ],
+      // Add other question types here
+      memoryflip: [
+        { question: 'A 2 C charge moves at 3 m/s in a 4 T magnetic field at 90°. Find the magnetic force. (F = qvB sin θ)', answer: '24N' },
+        { question: 'A charged particle with charge 2 μC moves at 4x10⁶ m/s in a magnetic field of 0.3 T. Force?', answer: '2.4x10⁻¹³ N' },
+        { question: 'A 2 C charge moves at 4 m/s in a 3 T field at 0°. Find F.', answer: '0 N' },
+        { question: 'An electron (m = 9.11x10⁻³¹ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.01 T field at v = 10⁶ m/s. Find radius of circular path. (r = mv/qB)', answer: '5.69x10⁻³m' },
+        { question: 'A proton (m = 1.67x10⁻²⁷ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.2 T field at v = 2x10⁶ m/s. Radius?', answer: '1.04x10⁻¹m' },
+      ],
+      fighttime: [
+        { question: 'A 2 C charge moves at 3 m/s in a 4 T magnetic field at 90°. Find the magnetic force. (F = qvB sin θ)', answers: ['24N'] },
+        { question: 'A charged particle with charge 2 μC moves at 4x10⁶ m/s in a magnetic field of 0.3 T. Force?', answers: ['2.4x10⁻¹³ N'] },
+        { question: 'A 2 C charge moves at 4 m/s in a 3 T field at 0°. Find F.', answers: ['0 N'] },
+        { question: 'An electron (m = 9.11x10⁻³¹ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.01 T field at v = 10⁶ m/s. Find radius of circular path. (r = mv/qB)', answers: ['5.69x10⁻³m'] },
+        { question: 'A proton (m = 1.67x10⁻²⁷ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.2 T field at v = 2x10⁶ m/s. Radius?', answers: ['1.04x10⁻¹m'] },
+      ],
+      matchit: [
+        { question: 'A 2 C charge moves at 3 m/s in a 4 T magnetic field at 90°. Find the magnetic force. (F = qvB sin θ)', answer: '24N' },
+        { question: 'A charged particle with charge 2 μC moves at 4x10⁶ m/s in a magnetic field of 0.3 T. Force?', answer: '2.4x10⁻¹³ N' },
+        { question: 'A 2 C charge moves at 4 m/s in a 3 T field at 0°. Find F.', answer: '0 N' },
+        { question: 'An electron (m = 9.11x10⁻³¹ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.01 T field at v = 10⁶ m/s. Find radius of circular path. (r = mv/qB)', answer: '5.69x10⁻³m' },
+        { question: 'A proton (m = 1.67x10⁻²⁷ kg, q = 1.6x10⁻¹⁹ C) moves in a 0.2 T field at v = 2x10⁶ m/s. Radius?', answer: '1.04x10⁻¹m' },
+      ],
+      guessword: [
+        {question: 'The study of magnetic fields and their effects.', answer: 'MAGNETISM'},
+        {question: 'A magnetic force provides ____ force', answer: 'CENTRIPETAL'},
+        {question: 'The region around a magnet where magnetic forces are exerted.', answer: 'MAGNETICFIELD'},
+        {question: 'Magnetic force on a moving charge is __ to both velocity and magnetic field.', answer: 'PERPENDICULAR'},
+      ],
+      conceptpuzzle: [
+        { question: 'The study of magnetic fields and their effects.', answer: 'MAGNETISM', hints: ['Magnetic', 'Fields'] },
+        { question: 'A magnetic force provides ____ force', answer: 'CENTRIPETAL', hints: ['Magnetic Force', 'Type'] },
+        { question: 'The region around a magnet where magnetic forces are exerted.', answer: 'MAGNETICFIELD', hints: ['Region', 'Magnet'] },
+        { question: 'Magnetic force on a moving charge is __ to both velocity and magnetic field.', answer: 'PERPENDICULAR', hints: ['Magnetic Force', 'Direction'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "MAGNETISM ", order: 1 },
+          { id: "2", text: "is the study of ", order: 2 },
+          { id: "3", text: "magnetic fields and their effects.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "CENTRIPETAL ", order: 1 },
+          { id: "2", text: "force is provided by ", order: 2 },
+          { id: "3", text: "a magnetic force.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "MAGNETICFIELD ", order: 1 },
+          { id: "2", text: "is the region around a ", order: 2 },
+          { id: "3", text: "magnet where magnetic forces are exerted.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "PERPENDICULAR ", order: 1 },
+          { id: "2", text: "is the direction of magnetic force ", order: 2 },
+          { id: "3", text: "on a moving charge to both velocity and magnetic field.", order: 3 },
+      ],
+    ]
+    },
+    'phys2-unit5': {
+      // Add your questions here
+      snake: [
+        {question: 'Discovered electromagnetic induction (1831)', answer: 'FARADEY'},
+        {question: 'Induced voltage in a coil is proportional to the rate of change of ___.', answer: 'MAGNETICFLUX'},
+        {question: 'Determined the direction of induced currents (1834)', answer: 'LENZ'},
+        {question: 'A device that converts mechanical energy to electrical energy.', answer: 'GENERATOR'},
+        {question: 'change AC voltage levels.', answer: 'TRANSFORMERS'},
+      ],
+      wordsearch: [
+        {word: "FARADEY"},
+        {word: "MAGNETICFLUX"},
+        {word: "LENZ"},
+        {word: "GENERATOR"},
+        {word: "TRANSFORMERS"},
+      ],
+      dragdrop: {
+        categories: ["Electromagnetic Induction Concepts", "Devices"],
+        items: [
+          { category: "Electromagnetic Induction Concepts", text: "FARADEY" },
+          { category: "Electromagnetic Induction Concepts", text: "MAGNETIC FLUX" },
+          { category: "Electromagnetic Induction Concepts", text: "LENZ" },
+          { category: "Devices", text: "GENERATOR" },
+          { category: "Devices", text: "TRANSFORMERS" },
+          { category: 'Devices', text: 'MOTORS' },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ discovered electromagnetic induction (1831).", answer: "FARADEY" },
+        { sentence: "Induced voltage in a coil is proportional to the rate of change of ___.", answer: "MAGNETICFLUX" },
+        { sentence: "___ determined the direction of induced currents (1834).", answer: "LENZ" },
+        { sentence: "A ___ converts mechanical energy to electrical energy.", answer: "GENERATOR" },
+        { sentence: "___ change AC voltage levels.", answer: "TRANSFORMERS" },
+        ],
+        memoryflip: [
+          {question: 'A transformer has V₁ = 120 V, N₁ = 200 turns, N₂ = 400 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answer: '240 V'},
+          {question: 'A transformer has V₁ = 240 V, N₁ = 500 turns, N₂ = 250 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answer: '120 V'},
+          {question: 'A generator produces 60 Hz AC. If the coil has 50 turns and rotates in a 0.1 T field with area 0.02 m², find the maximum emf. (emf = NABω)', answer: '3.77 V'},
+          {question: 'A coil with 100 turns and area 0.05 m² rotates in a 0.2 T field at 30 Hz. Find maximum emf.', answer: '6.28 V'},
+          {question: 'A coil with 150 turns and area 0.03 m² rotates in a 0.15 T field at 25 Hz. Find maximum emf.', answer: '5.30 V'},
+        ],
+        fighttime: [
+          { question: 'A transformer has V₁ = 120 V, N₁ = 200 turns, N₂ = 400 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answers: ['240 V'] },
+          { question: 'A transformer has V₁ = 240 V, N₁ = 500 turns, N₂ = 250 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answers: ['120 V'] },
+          { question: 'A generator produces 60 Hz AC. If the coil has 50 turns and rotates in a 0.1 T field with area 0.02 m², find the maximum emf. (emf = NABω)', answers: ['3.77 V'] },
+          { question: 'A coil with 100 turns and area 0.05 m² rotates in a 0.2 T field at 30 Hz. Find maximum emf.', answers: ['6.28 V'] },
+          { question: 'A coil with 150 turns and area 0.03 m² rotates in a 0.15 T field at 25 Hz. Find maximum emf.', answers: ['5.30 V'] },
+        ],
+        matchit: [
+          {question: 'A transformer has V₁ = 120 V, N₁ = 200 turns, N₂ = 400 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answer: '240 V'},
+          {question: 'A transformer has V₁ = 240 V, N₁ = 500 turns, N₂ = 250 turns. Find V₂. (V₂ = V₁(N₂/N₁))', answer: '120 V'},
+          {question: 'A generator produces 60 Hz AC. If the coil has 50 turns and rotates in a 0.1 T field with area 0.02 m², find the maximum emf. (emf = NABω)', answer: '3.77 V'},
+          {question: 'A coil with 100 turns and area 0.05 m² rotates in a 0.2 T field at 30 Hz. Find maximum emf.', answer: '6.28 V'},
+          {question: 'A coil with 150 turns and area 0.03 m² rotates in a 0.15 T field at 25 Hz. Find maximum emf.', answer: '5.30 V'},
+        ],
+        guessword: [
+          {question: 'Discovered electromagnetic induction (1831)', answer: 'FARADEY'},
+          {question: 'Induced voltage in a coil is proportional to the rate of change of ___.', answer: 'MAGNETICFLUX'},
+          {question: 'Determined the direction of induced currents (1834)', answer: 'LENZ'},
+          {question: 'A device that converts mechanical energy to electrical energy.', answer: 'GENERATOR'},
+          {question: 'change AC voltage levels.', answer: 'TRANSFORMERS'},
+        ],  
+        conceptpuzzle: [
+          { question: 'Discovered electromagnetic induction (1831)', answer: 'FARADEY', hints: ['Discovery', 'Induction'] },
+          { question: 'Induced voltage in a coil is proportional to the rate of change of ___.', answer: 'MAGNETICFLUX', hints: ['Induced Voltage', 'Coil'] },
+          { question: 'Determined the direction of induced currents (1834)', answer: 'LENZ', hints: ['Direction', 'Induced Currents'] },
+          { question: 'A device that converts mechanical energy to electrical energy.', answer: 'GENERATOR', hints: ['Device', 'Energy Conversion'] },  
+          { question: 'change AC voltage levels.', answer: 'TRANSFORMERS', hints: ['AC Voltage', 'Change'] },
+        ],
+        jigsaw: [ 
+          // Puzzle 1
+          [
+            { id: "1", text: "Michael Faraday ", order: 1 },
+            { id: "2", text: "discovered electromagnetic ", order: 2 },
+            { id: "3", text: "induction (1831).", order: 3 },
+          ],
+          // Puzzle 2
+          [
+            { id: "1", text: "Magnetic Flux ", order: 1 },
+            { id: "2", text: "is the rate of change of ", order: 2 },
+            { id: "3", text: "induced voltage in a coil.", order: 3 },
+          ],
+          // Puzzle 3
+          [
+            { id: "1", text: "Lenz's Law ", order: 1 },
+            { id: "2", text: "determines the direction of ", order: 2 },
+            { id: "3", text: "induced currents (1834).", order: 3 },
+          ],
+          // Puzzle 4
+          [
+            { id: "1", text: "A Generator ", order: 1 },
+            { id: "2", text: "converts mechanical energy ", order: 2 },
+            { id: "3", text: "to electrical energy.", order: 3 },
+          ],
+          // Puzzle 5
+          [
+            { id: "1", text: "Transformers ", order: 1 },
+            { id: "2", text: "change AC voltage ", order: 2 },
+            { id: "3", text: "levels.", order: 3 },
+          ],
+        ],
+
+    },
+    'phys2-unit6': {
+      // Add your questions here
+      snake: [
+        {question: 'The study of electromagnetic waves.', answer: 'OPTICS'},
+        {question: 'The bending of light as it passes from one medium to another.', answer: 'REFRACTION'},
+        {question: 'The bouncing of light off a surface.', answer: 'REFLECTION'},
+        {question: 'A lens that converges light rays.', answer: 'CONVEX'},
+        {question: 'A lens that diverges light rays.', answer: 'CONCAVE'},
+      ],
+      wordsearch: [
+        {word: "OPTICS"},
+        {word: "REFRACTION"},
+        {word: "REFLECTION"},
+        {word: "CONVEX"},
+        {word: "CONCAVE"},
+      ],
+      dragdrop: {
+        categories: ["Optics Concepts", "Lens Types"],
+        items: [
+          { category: "Optics Concepts", text: "OPTICS" },
+          { category: "Optics Concepts", text: "REFRACTION" },
+          { category: "Optics Concepts", text: "REFLECTION" },
+          { category: "Lens Types", text: "CONVEX" },
+          { category: "Lens Types", text: "CONCAVE" },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ is the study of electromagnetic waves.", answer: "OPTICS" },
+        { sentence: "___ is the bending of light as it passes from one medium to another.", answer: "REFRACTION" },
+        { sentence: "___ is the bouncing of light off a surface.", answer: "REFLECTION" },
+        { sentence: "A ___ lens converges light rays.", answer: "CONVEX" },
+        { sentence: "A ___ lens diverges light rays.", answer: "CONCAVE" }, 
+      ],
+      memoryflip: [
+        {question: 'A light ray passes from air (n=1.0) into water (n=1.33) at 30°. Find angle of refraction. (Snell’s Law: n₁sinθ₁ = n₂sinθ₂)', answer: '22.1°'},
+        {question: 'A light ray passes from glass (n=1.5) into air (n=1.0) at 40°. Find angle of refraction.', answer: '62.7°'},
+        {question: 'A convex lens has focal length 10 cm. An object is placed 30 cm from the lens. Find image distance. (1/f = 1/do + 1/di)', answer: '15 cm'},
+        {question: 'A concave lens has focal length -20 cm. An object is placed 40 cm from the lens. Find image distance.', answer: '-13.3 cm'},
+        {question: 'A light ray in air (n=1.0) hits a glass surface (n=1.5) at 60°. Find angle of refraction.', answer: '37.9°'},
+      ],
+      fighttime: [
+        { question: 'A light ray passes from air (n=1.0) into water (n=1.33) at 30°. Find angle of refraction. (Snell’s Law: n₁sinθ₁ = n₂sinθ₂)', answers: ['22.1°'] },
+        { question: 'A light ray passes from glass (n=1.5) into air (n=1.0) at 40°. Find angle of refraction.', answers: ['62.7°'] },
+        { question: 'A convex lens has focal length 10 cm. An object is placed 30 cm from the lens. Find image distance. (1/f = 1/do + 1/di)', answers: ['15 cm'] },
+        { question: 'A concave lens has focal length -20 cm. An object is placed 40 cm from the lens. Find image distance.', answers: ['-13.3 cm'] },
+        { question: 'A light ray in air (n=1.0) hits a glass surface (n= 1.5) at 60°. Find angle of refraction.', answers: ['37.9°'] },
+      ],
+      matchit: [
+        {question: 'A light ray passes from air (n=1.0) into water (n=1.33) at 30°. Find angle of refraction. (Snell’s Law: n₁sinθ₁ = n₂sinθ₂)', answer: '22.1°'},
+        {question: 'A light ray passes from glass (n=1.5) into air (n=1.0) at 40°. Find angle of refraction.', answer: '62.7°'},
+        {question: 'A convex lens has focal length 10 cm. An object is placed 30 cm from the lens. Find image distance. (1/f = 1/do + 1/di)', answer: '15 cm'},
+        {question: 'A concave lens has focal length -20 cm. An object is placed 40 cm from the lens. Find image distance.', answer: '-13.3 cm'},
+        {question: 'A light ray in air (n=1.0) hits a glass surface (n=1.5) at 60°. Find angle of refraction.', answer: '37.9°'},
+      ],
+      guessword: [
+        {question: 'The study of electromagnetic waves.', answer: 'OPTICS'},
+        {question: 'The bending of light as it passes from one medium to another.', answer: 'REFRACTION'},
+        {question: 'The bouncing of light off a surface.', answer: 'REFLECTION'},
+        {question: 'A lens that converges light rays.', answer: 'CONVEX'},
+        {question: 'A lens that diverges light rays.', answer: 'CONCAVE'},
+      ],
+      conceptpuzzle: [
+        { question: 'The study of electromagnetic waves.', answer: 'OPTICS', hints: ['Electromagnetic', 'Waves'] },
+        { question: 'The bending of light as it passes from one medium to another.', answer: 'REFRACTION', hints: ['Bending', 'Medium'] },
+        { question: 'The bouncing of light off a surface.', answer: 'REFLECTION', hints: ['Bouncing', 'Surface'] },
+        { question: 'A lens that converges light rays.', answer: 'CONVEX', hints: ['Lens', 'Converges'] },
+        { question: 'A lens that diverges light rays.', answer: 'CONCAVE', hints: ['Lens', 'Diverges'] },
+      ],
+      jigsaw: [ 
+        // Puzzle 1
+        [
+          { id: "1", text: "OPTICS ", order: 1 },
+          { id: "2", text: "is the study of ", order: 2 },
+          { id: "3", text: "electromagnetic waves.", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "REFRACTION ", order: 1 },
+          { id: "2", text: "is the bending of light ", order: 2 },
+          { id: "3", text: "as it passes from one medium to another.", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "REFLECTION ", order: 1 },
+          { id: "2", text: "is the bouncing of light ", order: 2 },
+          { id: "3", text: "off a surface.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "A CONVEX ", order: 1 }, 
+          { id: "2", text: "lens converges ", order: 2 },
+          { id: "3", text: "light rays.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "A CONCAVE ", order: 1 },
+          { id: "2", text: "lens diverges ", order: 2 },
+          { id: "3", text: "light rays.", order: 3 },
+        ],
+      ],
+    },
+    'phys2-unit7': {
+      // Add your questions here
+      snake: [
+        { question: 'Explained the photoelectric effect using photons (1905, Nobel Prize 1921)', answer: 'EINSTEIN' },
+        { question: 'Introduced the quantum of energy (1900)', answer: 'PLANCK' },
+        { question: 'Heavy nucleus splits.', answer: 'FISSION' },
+        { question: 'High-energy photon', answer: 'GAMMA' },
+        { question: 'The number of photons hitting a surface per unit time is proportional to ___.', answer: 'INTENSITY' },
+      ],
+      wordsearch: [
+        { word: "EINSTEIN" },
+        { word: "PLANCK" },
+        { word: "FISSION" },
+        { word: "GAMMA" },
+        { word: "INTENSITY" },
+      ],
+      dragdrop: {
+        categories: ["Quantum Concepts", "Particles"],
+        items: [
+          { category: "Quantum Concepts", text: "Wave-Particle Duality" },
+          { category: "Quantum Concepts", text: "Atomic Spectra" },
+          { category: "Quantum Concepts", text: "Radioactivity" },
+          { category: "Particles", text: "Gamma" },
+          { category: "Particles", text: "Intensity" },
+          { category: 'Particles', text: 'Photon' },
+        ],
+      },
+      fillblanks: [
+        { sentence: "___ explained the photoelectric effect using photons (1905, Nobel Prize 1921).", answer: "EINSTEIN" },
+        { sentence: "___ introduced the quantum of energy (1900).", answer: "PLANCK" },
+        { sentence: "___ is when a heavy nucleus splits.", answer: "FISSION" },
+        { sentence: "A high-energy photon is called ___.", answer: "GAMMA" },
+        { sentence: "The number of photons hitting a surface per unit time is proportional to ___.", answer: "INTENSITY"}
+        ],
+      memoryflip: [
+        {question: 'Calculate the energy of a photon with frequency 6x10¹⁴ Hz. (E = hf, h = 6.63x10⁻³⁴ J·s)', answer: '3.978x10⁻¹⁹ J'},
+        {question: 'Calculate the wavelength of a photon with energy 4x10⁻¹⁹ J. (E = hc/λ, c = 3x10⁸ m/s)', answer: '4.97x10⁻⁷ m'},
+        {question: 'A photon has a wavelength of 500 nm. Find its frequency. (c = λf)', answer: '6x10¹⁴ Hz'},
+        {question: 'Calculate the energy of a photon with wavelength 400 nm.', answer: '4.97x10⁻¹⁹ J'},
+        {question: 'A photon has frequency 5x10¹⁴ Hz. Find its wavelength.', answer: '6x10⁻⁷ m'},
+      ],
+      fighttime: [
+        { question: 'Calculate the energy of a photon with frequency 6x10¹⁴ Hz. (E = hf, h = 6.63x10⁻³⁴ J·s)', answers: ['3.978x10⁻¹⁹ J'] },
+        { question: 'Calculate the wavelength of a photon with energy 4x10⁻¹⁹ J. (E = hc/λ, c = 3x10⁸ m/s)', answers: ['4.97x10⁻⁷ m'] },
+        { question: 'A photon has a wavelength of 500 nm. Find its frequency. (c = λf)', answers: ['6x10¹⁴ Hz'] },
+        { question: 'Calculate the energy of a photon with wavelength 400 nm.', answers: ['4.97x10⁻¹⁹ J'] },
+        { question: 'A photon has frequency 5x10¹⁴ Hz. Find its wavelength.', answers: ['6x10⁻⁷ m'] },
+      ],
+      matchit: [
+        {question: 'Calculate the energy of a photon with frequency 6x10¹⁴ Hz. (E = hf, h = 6.63x10⁻³⁴ J·s)', answer: '3.978x10⁻¹⁹ J'},
+        {question: 'Calculate the wavelength of a photon with energy 4x10⁻¹⁹ J. (E = hc/λ, c = 3x10⁸ m/s)', answer: '4.97x10⁻⁷ m'},
+        {question: 'A photon has a wavelength of 500 nm. Find its frequency. (c = λf)', answer: '6x10¹⁴ Hz'},
+        {question: 'Calculate the energy of a photon with wavelength 400 nm.', answer: '4.97x10⁻¹⁹ J'},
+        {question: 'A photon has frequency 5x10¹⁴ Hz. Find its wavelength.', answer: '6x10⁻⁷ m'},
+      ],
+      guessword: [
+        { question: 'Explained the photoelectric effect using photons (1905, Nobel Prize 1921)(surname only)', answer: 'EINSTEIN' },
+        { question: 'Introduced the quantum of energy (1900)(surname only)', answer: 'PLANCK' },
+        { question: 'Heavy nucleus splits.', answer: 'FISSION' },
+        { question: 'High-energy photon', answer: 'GAMMA' },
+        { question: 'The number of photons hitting a surface per unit time is proportional to ___.', answer: 'INTENSITY' },
+      ],
+      conceptpuzzle: [
+        { question: 'Explained the photoelectric effect using photons (1905, Nobel Prize 1921)(surname only)', answer: 'EINSTEIN', hints: ['Photoelectric', 'Effect'] },
+        { question: 'Introduced the quantum of energy (1900)(surname only)', answer: 'PLANCK', hints: ['Quantum', 'Energy'] },
+        { question: 'Heavy nucleus splits.', answer: 'FISSION', hints: ['Nucleus', 'Splits'] },
+        { question: 'High-energy photon', answer: 'GAMMA', hints: ['Photon', 'Energy'] },
+        { question: 'The number of photons hitting a surface per unit time is proportional to ___.', answer: 'INTENSITY', hints: ['Photons', 'Surface'] },
+      ],
+      jigsaw: [
+        // Puzzle 1
+        [
+          { id: "1", text: "Albert Einstein ", order: 1 },
+          { id: "2", text: "explained the photoelectric ", order: 2 },
+          { id: "3", text: "effect using photons (1905, Nobel Prize 1921).", order: 3 },
+        ],
+        // Puzzle 2
+        [
+          { id: "1", text: "Max Planck ", order: 1 },
+          { id: "2", text: "introduced the quantum ", order: 2 },
+          { id: "3", text: "of energy (1900).", order: 3 },
+        ],
+        // Puzzle 3
+        [
+          { id: "1", text: "FISSION ", order: 1 },
+          { id: "2", text: "is when a heavy nucleus ", order: 2 },
+          { id: "3", text: "splits.", order: 3 },
+        ],
+        // Puzzle 4
+        [
+          { id: "1", text: "A GAMMA ", order: 1 },
+          { id: "2", text: "is a high-energy ", order: 2 },
+          { id: "3", text: "photon.", order: 3 },
+        ],
+        // Puzzle 5
+        [
+          { id: "1", text: "INTENSITY ", order: 1 },
+          { id: "2", text: "is proportional to the ", order: 2 },
+          { id: "3", text: "number of photons hitting a surface per unit time.", order: 3 },
+      ],
+      ],
+  },
+},
+}
+
+function getManualOverride(subjectId: string, unitId: string) {
+  try {
+    const raw = localStorage.getItem('manualGameQuestions');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.[subjectId]?.[unitId] ?? null;
+  } catch (err) {
+    console.warn('Failed to parse manualGameQuestions from localStorage', err);
+    return null;
+  }
+}
+
+// Get questions from centralized data or localStorage override
+export function useGameQuestions(subjectId: string, unitId: string) {
+  const unit = getUnit(subjectId, unitId);
+
+  // Debug: surface which subject/unit is being requested and what data exists
+  try {
+    // eslint-disable-next-line no-console
+    console.debug('[useGameQuestions] requesting', { subjectId, unitId, unitExists: !!unit });
+  } catch (e) {
+    // ignore in non-browser environments
+  }
+
+  // Use centralized game question data
+  const gameData = gameQuestionData[subjectId]?.[unitId] || {};
+
+  // Check for manual override from localStorage and merge with generated data
+  const manualOverride = getManualOverride(subjectId, unitId);
+  if (manualOverride) {
+    try {
+      // eslint-disable-next-line no-console
+      console.debug('[useGameQuestions] found manual override, merging with generated', { subjectId, unitId, manualKeys: Object.keys(manualOverride) });
+    } catch (e) {}
+  }
+
+  const merged = { ...gameData, ...(manualOverride || {}) } as GameData;
+
+  try {
+    // eslint-disable-next-line no-console
+    console.debug('[useGameQuestions] generated/merged gameData keys', { subjectId, unitId, hasGameData: !!gameQuestionData[subjectId]?.[unitId], snake: (merged.snake || []).length, wordsearch: (merged.wordsearch || []).length });
+  } catch (e) {}
+
+  return useMemo(() => {
+    return {
+      questions: (merged.conceptpuzzle?.slice(0, 1).map(q => ({ question: q.question, answer: q.answer, hints: q.hints })) || []) as GameQuestion[],
+      enumerationQuestions: (merged.fighttime || []) as EnumerationQuestion[],
+      categoryQuestions: merged.dragdrop ? [merged.dragdrop] : [] as CategoryQuestion[],
+      snake: (merged.snake || []) as SnakeQuestion[],
+      wordsearch: (merged.wordsearch || []) as WordSearchQuestion[],
+      dragdrop: (merged.dragdrop || { categories: [], items: [] }) as DragDropData,
+      fillblanks: (merged.fillblanks || []) as FillBlanksQuestion[],
+      memoryflip: (merged.memoryflip || []) as MemoryFlipQuestion[],
+      fighttime: (merged.fighttime || []) as FightTimeQuestion[],
+      matchit: (merged.matchit || []) as MatchItQuestion[],
+      guessword: (merged.guessword || []) as GuessWordQuestion[],
+      conceptpuzzle: (merged.conceptpuzzle || []) as ConceptPuzzleQuestion[],
+      jigsaw: (merged.jigsaw || []) as JigsawQuestion[][],
+      unit,
+    };
+  }, [unit, manualOverride]);
+}
