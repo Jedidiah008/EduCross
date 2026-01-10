@@ -74,14 +74,19 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
     directionRef.current = { x: 1, y: 0 };
     setCollectedLetters('');
     setGameOver(false);
-    generateLetters();
   }, [generateLetters]);
+
 
   useEffect(() => {
     if (gameStarted && targetAnswer) {
       generateLetters();
     }
   }, [currentLevel, gameStarted, generateLetters, targetAnswer]);
+
+  // Reset level state when level changes so player can read question before starting
+  useEffect(() => {
+    resetLevel();
+  }, [currentLevel, resetLevel]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -166,6 +171,8 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
               setTimeout(() => {
                 setCurrentLevel(l => l + 1);
                 resetLevel();
+                // Pause before next level so player can read the next question
+                setGameStarted(false);
               }, 500);
             }
           }
@@ -226,17 +233,17 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
             className="text-center max-w-md"
           >
             <div className="text-6xl mb-4">🐍</div>
-            <h2 className="font-display text-2xl font-bold mb-4">How to Play</h2>
-            <p className="text-muted-foreground mb-6">
-              Use arrow keys to control the snake. Eat letters in order to spell the answer.
-              Don't hit the walls or eat wrong letters!
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              {snakeQuestions.length} levels to complete
-            </p>
-            <Button size="lg" onClick={() => setGameStarted(true)}>
-              Start Game
-            </Button>
+              <h2 className="font-display text-2xl font-bold mb-4">Level {currentLevel + 1}</h2>
+              <p className="text-lg font-medium mb-4">{currentQuestion?.question}</p>
+              <p className="text-muted-foreground mb-6">
+                Read the question above, then click Start to begin this level. Use arrow keys to control the snake. Eat letters in order to spell the answer. Don't hit the walls or eat wrong letters!
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                {snakeQuestions.length} levels to complete
+              </p>
+              <Button size="lg" onClick={() => setGameStarted(true)}>
+                Start Level
+              </Button>
           </motion.div>
         </div>
       </div>
@@ -294,7 +301,7 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
             {snake.map((seg, i) => (
               <motion.div
                 key={i}
-                className={`absolute rounded ${i === 0 ? 'bg-primary' : 'bg-primary/70'}`}
+                  className={`absolute rounded ${i === 0 ? 'bg-green-600' : 'bg-green-500/70'}`}
                 style={{
                   left: seg.x * CELL_SIZE + 2,
                   top: seg.y * CELL_SIZE + 2,
@@ -315,7 +322,7 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
             >
               <p className="text-game-red font-bold text-xl mb-4">Game Over!</p>
               <p className="text-muted-foreground mb-4">Correct answer: {targetAnswer}</p>
-              <Button onClick={resetLevel}>Try Again</Button>
+              <Button onClick={() => { resetLevel(); setGameStarted(true); }}>Try Again</Button>
             </motion.div>
           )}
 
