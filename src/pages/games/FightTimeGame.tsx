@@ -30,6 +30,8 @@ export default function FightTimeGame({ subjectId, unitId }: FightTimeGameProps)
 
   const question = fighttime && fighttime.length > currentQuestion ? fighttime[currentQuestion] : null;
   const correctAnswers = question?.answers || [];
+  // some code elsewhere expects `enumerationQuestions` (same shape as fighttime)
+  const enumerationQuestions = fighttime || [];
 
   useEffect(() => {
     if (gameStarted && !gameOver && timeLeft > 0) {

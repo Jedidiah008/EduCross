@@ -161,6 +161,8 @@ export default function FillBlanksGame({ subjectId, unitId }: FillBlanksGameProp
   }
 
   const question = gameQuestions[currentQuestion];
+  // some data uses `sentence` as the text field (FillBlanksQuestion), support both
+  const questionText = question ? (question.question || (question as any).sentence || '') : '';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -198,7 +200,7 @@ export default function FillBlanksGame({ subjectId, unitId }: FillBlanksGameProp
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-xl bg-card p-8 rounded-2xl border-2 border-border"
         >
-          <p className="text-lg mb-6">{question?.question}</p>
+          <p className="text-lg mb-6">{questionText}</p>
           
           <div className="space-y-4">
             <div className="relative">

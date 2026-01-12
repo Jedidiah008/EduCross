@@ -164,7 +164,7 @@ export default function MatchItGame({ subjectId, unitId }: MatchItGameProps) {
                   whileHover={{ scale: showResults ? 1 : 1.02 }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex-1">{q.question.substring(0, 60)}{q.question.length > 60 ? '...' : ''}</span>
+                    <span className="flex-1 break-words whitespace-normal">{q.question}</span>
                     <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0
                       ${isConnected ? 'bg-game-yellow border-game-yellow' : 'border-muted-foreground'}`}
                     />

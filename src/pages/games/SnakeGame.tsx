@@ -35,13 +35,14 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
   const currentQuestion = snakeQuestions[currentLevel];
   const targetAnswer = (currentQuestion?.answer || '').toUpperCase();
 
-  const generateLetters = useCallback(() => {
-    if (!targetAnswer) return;
+  const generateLettersFor = (ans?: string) => {
+    const target = (ans || targetAnswer || '').toUpperCase();
+    if (!target) return;
     const newLetters: { pos: Position; char: string }[] = [];
     const used = new Set<string>();
     used.add('7,7');
 
-    for (const ch of targetAnswer.split('')) {
+    for (const ch of target.split('')) {
       let pos: Position;
       do {
         pos = { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE) };
@@ -61,7 +62,7 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
     }
 
     setLetters(newLetters);
-  }, [targetAnswer]);
+  };
 
   const resetLevel = useCallback(() => {
     setSnake([{ x: 7, y: 7 }]);
@@ -72,12 +73,21 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
     setLetters([]);
   }, []);
 
-  useEffect(() => {
-    // generate letters only when entering preview mode (prevent reshuffle on Start)
-    if (previewMode && targetAnswer) generateLetters();
-  }, [previewMode, currentLevel, generateLetters, targetAnswer]);
+  const startPreviewForLevel = (levelIndex: number) => {
+    const idx = Math.max(0, Math.min(levelIndex, snakeQuestions.length - 1));
+    setCurrentLevel(idx);
+    setSnake([{ x: 7, y: 7 }]);
+    setDirection({ x: 1, y: 0 });
+    directionRef.current = { x: 1, y: 0 };
+    setCollectedLetters('');
+    setGameOver(false);
+    setGameStarted(false);
+    setPreviewMode(true);
+    const ans = (snakeQuestions[idx]?.answer || '').toUpperCase();
+    generateLettersFor(ans);
+  };
 
-  useEffect(() => resetLevel(), [currentLevel, resetLevel]);
+  
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -134,10 +144,8 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
               setWon(true);
             } else {
               setTimeout(() => {
-                setCurrentLevel(l => l + 1);
-                resetLevel();
-                setGameStarted(false);
-                setPreviewMode(true);
+                const nextIndex = currentLevel + 1;
+                startPreviewForLevel(nextIndex);
               }, 500);
             }
           }
@@ -172,7 +180,7 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
             <h2 className="font-display text-2xl font-bold mb-4">How to Play</h2>
             <p className="text-muted-foreground mb-6">Read the instructions, then click Start Level to preview the board and question. Use arrow keys to control the snake. Eat letters in order to spell the answer. Don't hit the walls or eat wrong letters!</p>
             <p className="text-sm text-muted-foreground mb-6">{snakeQuestions.length} levels to complete</p>
-            <Button size="lg" onClick={() => { resetLevel(); setPreviewMode(true); setGameStarted(false); }}>Start Level</Button>
+            <Button size="lg" onClick={() => { startPreviewForLevel(0); }}>Start Level</Button>
           </motion.div>
         </div>
       </div>
@@ -213,7 +221,7 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
               <p className="text-game-red font-bold text-xl mb-4">Game Over!</p>
               <p className="text-muted-foreground mb-4">Correct answer: {targetAnswer}</p>
-              <Button onClick={() => { resetLevel(); setPreviewMode(true); setGameStarted(false); }}>Try Again</Button>
+              <Button onClick={() => { startPreviewForLevel(currentLevel); }}>Try Again</Button>
             </motion.div>
           )}
 

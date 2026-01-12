@@ -30,6 +30,12 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
 
   const currentQuestion = jigsaw && jigsaw.length > currentLevel ? jigsaw[currentLevel] : null;
 
+  const correctPhrase = currentQuestion
+    ? [...currentQuestion].sort((a, b) => a.order - b.order).map(p => p.text).join('').trim()
+    : '';
+
+  const clue = currentQuestion && (currentQuestion as any).answer ? (currentQuestion as any).answer : '';
+
   // Now the QUESTION (text) needs to be arranged to form the phrase that answers what's shown
   // The ANSWER becomes the clue/definition shown to the user
   useEffect(() => {
@@ -85,12 +91,13 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
   };
 
   const checkAnswer = () => {
-    const isCorrect = placedPieces.every((piece, index) => piece?.order === index);
-    
+    // piece.order is 1-based in the data, while placedPieces indexes are 0-based
+    const isCorrect = placedPieces.length > 0 && placedPieces.every((piece, index) => piece !== null && Number(piece!.order) === index + 1);
+
     if (isCorrect) {
       setScore(s => s + 1);
     }
-    
+
     setShowCorrection(true);
   };
 
@@ -102,13 +109,13 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
     }
   };
 
-  const isComplete = placedPieces.every(p => p !== null);
+  const isComplete = placedPieces.length > 0 && placedPieces.every(p => p !== null);
 
   if (gameComplete) {
     return (
       <GameResult
         score={score}
-        maxScore={questions.length}
+        maxScore={jigsaw ? jigsaw.length : 0}
         gameName="Jigsaw Puzzle"
         subjectId={subjectId}
         unitId={unitId}
@@ -157,16 +164,18 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
         subjectId={subjectId}
         unitId={unitId}
         score={score}
-        maxScore={questions.length}
+        maxScore={jigsaw ? jigsaw.length : 0}
       />
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 gap-8">
         <div className="text-center max-w-2xl">
           <p className="text-sm text-muted-foreground mb-2">Level {currentLevel + 1}/{jigsaw ? jigsaw.length : 0}</p>
           <p className="text-sm text-muted-foreground mb-1">Arrange words to form the phrase for:</p>
-          <p className="text-xl font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg inline-block">
-            {currentQuestion?.answer}
-          </p>
+          {clue ? (
+            <p className="text-xl font-medium text-primary bg-primary/10 px-4 py-2 rounded-lg inline-block">
+              {clue}
+            </p>
+          ) : null}
         </div>
 
         {/* Puzzle Slots */}
@@ -180,7 +189,7 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
               className={`min-w-[80px] h-12 flex items-center justify-center rounded-lg border-2 border-dashed transition-colors cursor-pointer
                 ${piece ? 
                   (showCorrection ? 
-                    (piece.order === index ? 'border-green-500 bg-green-500/20' : 'border-game-red bg-game-red/20') : 
+                    (Number(piece.order) === index + 1 ? 'border-green-500 bg-green-500/20' : 'border-game-red bg-game-red/20') : 
                     'border-primary bg-primary/20') : 
                   'border-muted-foreground/30 hover:border-primary'}`}
             >
@@ -188,7 +197,7 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
                 <span className="font-medium px-3 flex items-center gap-2">
                   {piece.text}
                   {showCorrection && (
-                    piece.order === index ? 
+                    Number(piece.order) === index + 1 ? 
                       <Check className="text-green-500" size={16} /> : 
                       <X className="text-game-red" size={16} />
                   )}
@@ -229,7 +238,7 @@ export default function JigsawGame({ subjectId, unitId }: JigsawGameProps) {
               <Lightbulb className="text-game-yellow" size={20} />
               <span className="font-bold">Correct Phrase:</span>
             </div>
-            <p className="text-lg text-primary">{currentQuestion?.question}</p>
+            <p className="text-lg text-primary">{correctPhrase}</p>
           </motion.div>
         )}
 

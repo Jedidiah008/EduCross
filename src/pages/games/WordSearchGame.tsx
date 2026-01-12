@@ -17,6 +17,7 @@ export default function WordSearchGame({ subjectId, unitId }: WordSearchGameProp
   const [grid, setGrid] = useState<string[][]>([]);
   const [selectedCells, setSelectedCells] = useState<{ row: number; col: number }[]>([]);
   const [foundWords, setFoundWords] = useState<string[]>([]);
+  const [foundCells, setFoundCells] = useState<Set<string>>(new Set());
   const [isSelecting, setIsSelecting] = useState(false);
   const [startCell, setStartCell] = useState<{ row: number; col: number } | null>(null);
   const [gameComplete, setGameComplete] = useState(false);
@@ -120,6 +121,56 @@ export default function WordSearchGame({ subjectId, unitId }: WordSearchGameProp
     return cells;
   };
 
+  const locateWordPositions = (word: string) => {
+    if (grid.length === 0) return null;
+    const dirs = [
+      { dx: 1, dy: 0 },
+      { dx: 0, dy: 1 },
+      { dx: 1, dy: 1 },
+      { dx: -1, dy: 1 },
+    ];
+
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
+        for (const dir of dirs) {
+          const endX = x + dir.dx * (word.length - 1);
+          const endY = y + dir.dy * (word.length - 1);
+          if (endX < 0 || endX >= GRID_SIZE || endY < 0 || endY >= GRID_SIZE) continue;
+
+          let matchForward = true;
+          for (let i = 0; i < word.length; i++) {
+            const cx = x + dir.dx * i;
+            const cy = y + dir.dy * i;
+            if (grid[cy][cx] !== word[i]) { matchForward = false; break; }
+          }
+          if (matchForward) {
+            const cells: { row: number; col: number }[] = [];
+            for (let i = 0; i < word.length; i++) {
+              cells.push({ row: y + dir.dy * i, col: x + dir.dx * i });
+            }
+            return cells;
+          }
+
+          // check reverse by comparing characters backwards
+          let matchReverse = true;
+          for (let i = 0; i < word.length; i++) {
+            const cx = x + dir.dx * i;
+            const cy = y + dir.dy * i;
+            if (grid[cy][cx] !== word[word.length - 1 - i]) { matchReverse = false; break; }
+          }
+          if (matchReverse) {
+            const cells: { row: number; col: number }[] = [];
+            for (let i = 0; i < word.length; i++) {
+              cells.push({ row: y + dir.dy * i, col: x + dir.dx * i });
+            }
+            return cells;
+          }
+        }
+      }
+    }
+    return null;
+  };
+
   const handleMouseDown = (row: number, col: number) => {
     setIsSelecting(true);
     setStartCell({ row, col });
@@ -145,7 +196,17 @@ export default function WordSearchGame({ subjectId, unitId }: WordSearchGameProp
       if (matchedWord) {
         const newFoundWords = [...foundWords, matchedWord];
         setFoundWords(newFoundWords);
-        
+
+        // locate positions for the matched word and mark those cells as found
+        const positions = locateWordPositions(matchedWord);
+        if (positions && positions.length > 0) {
+          setFoundCells(prev => {
+            const next = new Set(prev);
+            positions.forEach(p => next.add(`${p.row}-${p.col}`));
+            return next;
+          });
+        }
+
         if (newFoundWords.length === words.length) {
           setGameComplete(true);
         }
@@ -157,7 +218,7 @@ export default function WordSearchGame({ subjectId, unitId }: WordSearchGameProp
   };
 
   const isCellSelected = (row: number, col: number) => {
-    return selectedCells.some(c => c.row === row && c.col === col);
+    return selectedCells.some(c => c.row === row && c.col === col) || foundCells.has(`${row}-${col}`);
   };
 
   if (gameComplete) {
@@ -227,7 +288,7 @@ export default function WordSearchGame({ subjectId, unitId }: WordSearchGameProp
               <div
                 key={`${rowIndex}-${colIndex}`}
                 className={`w-8 h-8 flex items-center justify-center font-bold text-lg rounded cursor-pointer transition-colors
-                  ${isCellSelected(rowIndex, colIndex) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
+                          ${isCellSelected(rowIndex, colIndex) ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80'}`}
                 onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
                 onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
                 onMouseUp={handleMouseUp}
