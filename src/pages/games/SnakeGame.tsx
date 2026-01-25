@@ -4,7 +4,7 @@ import { GameHeader } from '@/components/GameHeader';
 import { GameResult } from '@/components/GameResult';
 import { Button } from '@/components/ui/button';
 import { useGameQuestions } from '@/hooks/useGameQuestions';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react';
 
 type Position = { x: number; y: number };
 
@@ -162,6 +162,17 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
   const decreaseSpeed = () => setSpeed(s => Math.min(400, s + 25));
   const getSpeedLabel = () => (speed <= 100 ? 'Very Fast' : speed <= 150 ? 'Fast' : speed <= 200 ? 'Normal' : speed <= 300 ? 'Slow' : 'Very Slow');
 
+  const handleMobileMove = (dx: number, dy: number) => {
+    if (!gameStarted || gameOver) return;
+    const dir = { ...directionRef.current };
+    if (dx === 0 && dy === -1 && directionRef.current.y !== 1) { dir.x = 0; dir.y = -1; }
+    else if (dx === 0 && dy === 1 && directionRef.current.y !== -1) { dir.x = 0; dir.y = 1; }
+    else if (dx === -1 && dy === 0 && directionRef.current.x !== 1) { dir.x = -1; dir.y = 0; }
+    else if (dx === 1 && dy === 0 && directionRef.current.x !== -1) { dir.x = 1; dir.y = 0; }
+    directionRef.current = dir;
+    setDirection(dir);
+  };
+
   if (won) {
     return (
       <GameResult score={score} maxScore={snakeQuestions.length} gameName="Snake Game" subjectId={subjectId} unitId={unitId}
@@ -226,6 +237,24 @@ export default function SnakeGame({ subjectId, unitId }: SnakeGameProps) {
           )}
 
           <p className="text-sm text-muted-foreground">Use arrow keys ← ↑ → ↓ to move</p>
+
+          {/* Mobile Controls */}
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => handleMobileMove(0, -1)} className="w-10 h-10">
+              <ArrowUp size={20} />
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="icon" onClick={() => handleMobileMove(-1, 0)} className="w-10 h-10">
+                <ArrowLeft size={20} />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => handleMobileMove(0, 1)} className="w-10 h-10">
+                <ArrowDown size={20} />
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => handleMobileMove(1, 0)} className="w-10 h-10">
+                <ArrowRight size={20} />
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col items-center gap-4">

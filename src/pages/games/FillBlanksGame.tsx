@@ -71,18 +71,8 @@ export default function FillBlanksGame({ subjectId, unitId }: FillBlanksGameProp
 
   const handleSubmit = () => {
     if (currentQuestion + 1 >= gameQuestions.length) {
-      // Check all answers
-      const allCorrect = gameQuestions.every((q, i) => 
-        answers[i].toLowerCase().trim() === q.answer.toLowerCase().trim()
-      );
-      
-      if (allCorrect) {
-        setGameWon(true);
-      } else {
-        // Reset to first question
-        setCurrentQuestion(0);
-        setTimeLeft(selectedTime || 60);
-      }
+      // Finish the game after all questions are answered
+      setGameWon(true);
     } else {
       setCurrentQuestion(c => c + 1);
     }
@@ -131,8 +121,7 @@ export default function FillBlanksGame({ subjectId, unitId }: FillBlanksGameProp
             <div className="text-6xl mb-4">📝</div>
             <h2 className="font-display text-2xl font-bold mb-4">How to Play</h2>
             <p className="text-muted-foreground mb-6">
-              Answer all {gameQuestions.length} questions before time runs out.
-              If you don't finish in time, you'll start over from question 1!
+              Answer all {gameQuestions.length} questions. You can finish the game once you've answered every question, before or after the timer runs out!
             </p>
             
             <div className="mb-6">

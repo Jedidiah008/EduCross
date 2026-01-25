@@ -378,18 +378,6 @@ export const subjects: Record<string, Subject> = {
               },
             ],
           },
-          {
-            title: 'Bonding of Chemistry and Matter',
-            content: [
-              'Chemistry is fundamentally the study of matter and the changes it undergoes.',
-              'Types of bonds:',
-              '• Ionic Bonds - transfer of electrons between atoms (metal + non-metal)',
-              '-type of ions: cations (positive) and anions (negative)',
-              '• Covalent Bonds - sharing of electrons between atoms (non-metal + non-metal)',
-              '• Metallic Bonds - delocalized electrons among metal atoms',
-              'Understanding bonding helps explain properties of substances, reactivity, and the formation of compounds.',
-            ]
-          }
         ],
       },
       {
