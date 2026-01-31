@@ -22,7 +22,7 @@ const Index = () => {
           transition={{ delay: 0.4 }}
           className="mx-auto mt-6 max-w-md text-lg text-muted-foreground"
         >
-          Master Chemistry and Physics through interactive games and engaging lessons
+          Master Chemistry and Physics through Educross's interactive games and engaging lessons
         </motion.p>
 
         {/* CTA Buttons */}
